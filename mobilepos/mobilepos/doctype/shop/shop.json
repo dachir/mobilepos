@@ -1,0 +1,302 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:shop_name",
+ "creation": "2024-01-03 10:11:26.714529",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "shop_name",
+  "shop_email",
+  "shop_phone",
+  "shop_logo",
+  "territory",
+  "country",
+  "column_break_hrytn",
+  "company",
+  "branch",
+  "warehouse",
+  "currency",
+  "section_break_8ue0d",
+  "shop_address",
+  "section_break_xfsir",
+  "pagination_limit",
+  "footer_text",
+  "stock_limit",
+  "column_break_9yr35",
+  "time_zone",
+  "vat_reg_no",
+  "app_minimum_version_ios",
+  "user_tab",
+  "user",
+  "first_name",
+  "column_break_q9t4a",
+  "password",
+  "last_name",
+  "roles_section",
+  "order",
+  "return",
+  "dashboard",
+  "column_break_2pdpp",
+  "delivery",
+  "stock",
+  "payment",
+  "column_break_svsof",
+  "invoice",
+  "inventory",
+  "complement_tab",
+  "currency_symbol",
+  "base_urls"
+ ],
+ "fields": [
+  {
+   "fieldname": "shop_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Shop",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "shop_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "shop_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "shop_logo",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Logo"
+  },
+  {
+   "fieldname": "shop_address",
+   "fieldtype": "Text",
+   "label": "Address",
+   "max_height": "100px"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "footer_text",
+   "fieldtype": "Data",
+   "label": "Footer Text"
+  },
+  {
+   "default": "10",
+   "fieldname": "pagination_limit",
+   "fieldtype": "Data",
+   "label": "Pagination Limit"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "stock_limit",
+   "fieldtype": "Float",
+   "label": "Stock Limit"
+  },
+  {
+   "fieldname": "time_zone",
+   "fieldtype": "Select",
+   "label": "Time Zone"
+  },
+  {
+   "fieldname": "vat_reg_no",
+   "fieldtype": "Data",
+   "label": "VAT Reglementation No"
+  },
+  {
+   "fieldname": "app_minimum_version_ios",
+   "fieldtype": "Data",
+   "label": "App Minimum Version Ios"
+  },
+  {
+   "fieldname": "column_break_hrytn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_xfsir",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_9yr35",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "user_tab",
+   "fieldtype": "Tab Break",
+   "label": "User"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Data",
+   "label": "User",
+   "options": "Email"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name"
+  },
+  {
+   "fieldname": "column_break_q9t4a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Data",
+   "label": "Password"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "roles_section",
+   "fieldtype": "Section Break",
+   "label": "Roles"
+  },
+  {
+   "default": "0",
+   "fieldname": "order",
+   "fieldtype": "Check",
+   "label": "Order"
+  },
+  {
+   "fieldname": "column_break_2pdpp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "delivery",
+   "fieldtype": "Check",
+   "label": "Delivery"
+  },
+  {
+   "fieldname": "column_break_svsof",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice",
+   "fieldtype": "Check",
+   "label": "Invoice"
+  },
+  {
+   "fieldname": "complement_tab",
+   "fieldtype": "Tab Break",
+   "label": "Complement"
+  },
+  {
+   "fieldname": "currency_symbol",
+   "fieldtype": "Data",
+   "label": "Currency Symbol"
+  },
+  {
+   "fieldname": "base_urls",
+   "fieldtype": "Table",
+   "label": "Base Urls",
+   "options": "Base Urls"
+  },
+  {
+   "default": "0",
+   "fieldname": "return",
+   "fieldtype": "Check",
+   "label": "Return"
+  },
+  {
+   "default": "0",
+   "fieldname": "dashboard",
+   "fieldtype": "Check",
+   "label": "Dashboard"
+  },
+  {
+   "default": "0",
+   "fieldname": "stock",
+   "fieldtype": "Check",
+   "label": "Stock"
+  },
+  {
+   "default": "0",
+   "fieldname": "inventory",
+   "fieldtype": "Check",
+   "label": "Inventory"
+  },
+  {
+   "fieldname": "territory",
+   "fieldtype": "Link",
+   "label": "Territory",
+   "options": "Territory"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "section_break_8ue0d",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "payment",
+   "fieldtype": "Check",
+   "label": "Payment"
+  }
+ ],
+ "image_field": "shop_logo",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-03 15:55:15.118621",
+ "modified_by": "Administrator",
+ "module": "Mobilepos",
+ "name": "Shop",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
