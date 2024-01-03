@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include mobilepos *.css
+recursive-include mobilepos *.csv
+recursive-include mobilepos *.html
+recursive-include mobilepos *.ico
+recursive-include mobilepos *.js
+recursive-include mobilepos *.json
+recursive-include mobilepos *.md
+recursive-include mobilepos *.png
+recursive-include mobilepos *.py
+recursive-include mobilepos *.svg
+recursive-include mobilepos *.txt
+recursive-exclude mobilepos *.pyc
