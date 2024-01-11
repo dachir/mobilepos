@@ -304,7 +304,7 @@ def create_invoice():
             {
                 "doctype": "Sales Invoice",
                 "customer": customer,
-                #"company": company,
+                "company": company,
                 #"set_posting_time": 1,
                 #"posting_date": frappe.utils.getdate(),
                 #"due_date": frappe.utils.getdate(),
