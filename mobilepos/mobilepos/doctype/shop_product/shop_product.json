@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-06 10:18:16.862000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "product_code",
+  "title",
+  "unit_type",
+  "unit_value",
+  "brand",
+  "category_ids",
+  "purchase_price",
+  "selling_price",
+  "discount_type",
+  "discount",
+  "tax",
+  "quantity",
+  "image",
+  "order_count",
+  "supplier_id",
+  "company_id",
+  "shop"
+ ],
+ "fields": [
+  {
+   "fetch_from": "label.item_code",
+   "fieldname": "product_code",
+   "fieldtype": "Link",
+   "label": "Product Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "unit_type",
+   "fieldtype": "Link",
+   "label": "Unit Type",
+   "options": "Shop Unit"
+  },
+  {
+   "fetch_from": "unit_type.unit_type",
+   "fieldname": "unit_value",
+   "fieldtype": "Data",
+   "label": "Unit Value",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "label.brand",
+   "fieldname": "brand",
+   "fieldtype": "Data",
+   "label": "Brand"
+  },
+  {
+   "fieldname": "category_ids",
+   "fieldtype": "Data",
+   "label": "Category Ids"
+  },
+  {
+   "fieldname": "purchase_price",
+   "fieldtype": "Currency",
+   "label": "Purchase Price"
+  },
+  {
+   "fieldname": "selling_price",
+   "fieldtype": "Currency",
+   "label": "Selling Price"
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Data",
+   "label": "Discount Type"
+  },
+  {
+   "fieldname": "discount",
+   "fieldtype": "Float",
+   "label": "Discount"
+  },
+  {
+   "fieldname": "tax",
+   "fieldtype": "Float",
+   "label": "tax"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Data",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "order_count",
+   "fieldtype": "Int",
+   "label": "Order Count"
+  },
+  {
+   "fieldname": "supplier_id",
+   "fieldtype": "Int",
+   "label": "Supplier Id"
+  },
+  {
+   "fieldname": "company_id",
+   "fieldtype": "Int",
+   "label": "Company Id"
+  },
+  {
+   "fieldname": "shop",
+   "fieldtype": "Link",
+   "label": "Shop",
+   "options": "Shop"
+  },
+  {
+   "fetch_from": "product_code.item_name",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-06 22:23:41.594863",
+ "modified_by": "Administrator",
+ "module": "Mobilepos",
+ "name": "Shop Product",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

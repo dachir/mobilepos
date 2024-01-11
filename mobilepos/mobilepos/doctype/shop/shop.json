@@ -32,6 +32,7 @@
   "user_tab",
   "user",
   "first_name",
+  "sales_person",
   "column_break_q9t4a",
   "password",
   "last_name",
@@ -48,7 +49,15 @@
   "inventory",
   "complement_tab",
   "currency_symbol",
-  "base_urls"
+  "base_urls_section",
+  "category_image_url",
+  "brand_image_url",
+  "product_image_url",
+  "supplier_image_url",
+  "column_break_5v8r3",
+  "shop_image_url",
+  "admin_image_url",
+  "customer_image_url"
  ],
  "fields": [
   {
@@ -209,12 +218,6 @@
    "label": "Currency Symbol"
   },
   {
-   "fieldname": "base_urls",
-   "fieldtype": "Table",
-   "label": "Base Urls",
-   "options": "Base Urls"
-  },
-  {
    "default": "0",
    "fieldname": "return",
    "fieldtype": "Check",
@@ -271,12 +274,62 @@
    "fieldname": "payment",
    "fieldtype": "Check",
    "label": "Payment"
+  },
+  {
+   "fieldname": "base_urls_section",
+   "fieldtype": "Section Break",
+   "label": "Base Urls"
+  },
+  {
+   "fieldname": "category_image_url",
+   "fieldtype": "Data",
+   "label": "Category Image Url"
+  },
+  {
+   "fieldname": "brand_image_url",
+   "fieldtype": "Data",
+   "label": "Brand Image Url"
+  },
+  {
+   "fieldname": "product_image_url",
+   "fieldtype": "Data",
+   "label": "Product Image Url"
+  },
+  {
+   "fieldname": "supplier_image_url",
+   "fieldtype": "Data",
+   "label": "Supplier Image Url"
+  },
+  {
+   "fieldname": "column_break_5v8r3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shop_image_url",
+   "fieldtype": "Data",
+   "label": "Shop Image Url"
+  },
+  {
+   "fieldname": "admin_image_url",
+   "fieldtype": "Data",
+   "label": "Admin Image Url"
+  },
+  {
+   "fieldname": "customer_image_url",
+   "fieldtype": "Data",
+   "label": "Customer Image Url"
+  },
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "label": "Sales Person",
+   "options": "Sales Person"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-03 15:55:15.118621",
+ "modified": "2024-01-09 18:03:28.187314",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",

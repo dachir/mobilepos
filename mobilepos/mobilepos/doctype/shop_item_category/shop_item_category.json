@@ -7,7 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "category",
+  "label",
   "parent_id",
   "position",
   "status",
@@ -16,14 +16,6 @@
   "shop"
  ],
  "fields": [
-  {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Category",
-   "options": "Item Group",
-   "reqd": 1
-  },
   {
    "fieldname": "parent_id",
    "fieldtype": "Link",
@@ -59,12 +51,20 @@
    "fieldname": "sync",
    "fieldtype": "Check",
    "label": "Sync"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Label",
+   "options": "Item Group",
+   "reqd": 1
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-03 23:24:12.448226",
+ "modified": "2024-01-04 22:15:15.384887",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Item Category",

@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-04 13:45:32.170038",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "mobile",
+  "email",
+  "image",
+  "state",
+  "city",
+  "zip_code",
+  "address",
+  "balance",
+  "company",
+  "order_count",
+  "shop",
+  "sync"
+ ],
+ "fields": [
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Link",
+   "label": "State",
+   "options": "Country"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "zip_code",
+   "fieldtype": "Data",
+   "label": "Zip Code"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Balance"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "default": "0",
+   "fieldname": "order_count",
+   "fieldtype": "Int",
+   "label": "Order Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shop",
+   "fieldtype": "Link",
+   "label": "Shop",
+   "options": "Shop"
+  },
+  {
+   "default": "0",
+   "fieldname": "sync",
+   "fieldtype": "Check",
+   "label": "Inactive"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Link",
+   "label": "Label",
+   "options": "Customer"
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-04 22:17:25.664234",
+ "modified_by": "Administrator",
+ "module": "Mobilepos",
+ "name": "Shop Customer",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

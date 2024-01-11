@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-05 10:14:46.431793",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "description",
+  "balance",
+  "account_number",
+  "total_in",
+  "total_out",
+  "shop"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Data",
+   "label": "Balance"
+  },
+  {
+   "fieldname": "account_number",
+   "fieldtype": "Link",
+   "label": "Account Number",
+   "options": "Account"
+  },
+  {
+   "fieldname": "total_in",
+   "fieldtype": "Currency",
+   "label": "Total In"
+  },
+  {
+   "fieldname": "total_out",
+   "fieldtype": "Currency",
+   "label": "Total Out"
+  },
+  {
+   "fieldname": "shop",
+   "fieldtype": "Link",
+   "label": "Shop",
+   "options": "Shop"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-05 10:27:46.528656",
+ "modified_by": "Administrator",
+ "module": "Mobilepos",
+ "name": "Shop Account",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

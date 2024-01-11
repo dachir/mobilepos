@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-05 12:06:48.274955",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tran_type",
+  "account_id",
+  "amount",
+  "description",
+  "document_type",
+  "order_id",
+  "debit",
+  "credit",
+  "balance",
+  "date",
+  "customer_id",
+  "supplier_id",
+  "shop"
+ ],
+ "fields": [
+  {
+   "fieldname": "tran_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Income\nExpense\nPayable\nReceivable"
+  },
+  {
+   "fieldname": "account_id",
+   "fieldtype": "Link",
+   "label": "Account Id",
+   "options": "Shop Account"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "Document Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "order_id",
+   "fieldtype": "Dynamic Link",
+   "label": "Order Id",
+   "options": "document_type"
+  },
+  {
+   "default": "0",
+   "fieldname": "debit",
+   "fieldtype": "Check",
+   "label": "Debit"
+  },
+  {
+   "default": "0",
+   "fieldname": "credit",
+   "fieldtype": "Check",
+   "label": "Credit"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Balance"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "customer_id",
+   "fieldtype": "Link",
+   "label": "Customer Id",
+   "options": "Shop Customer"
+  },
+  {
+   "fieldname": "supplier_id",
+   "fieldtype": "Data",
+   "label": "Supplier Id"
+  },
+  {
+   "fieldname": "shop",
+   "fieldtype": "Link",
+   "label": "Shop",
+   "options": "Shop"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-05 12:44:59.241388",
+ "modified_by": "Administrator",
+ "module": "Mobilepos",
+ "name": "Shop Transaction",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
