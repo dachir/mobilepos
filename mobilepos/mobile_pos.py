@@ -307,6 +307,7 @@ def create_invoice():
                 "company": company,
                 "set_posting_time": 1,
                 "posting_date": frappe.utils.getdate(),
+                "due_date": frappe.utils.getdate(),
                 "currency": currency,
                 "branch": branch,
                 "set_warehouse": warehouse,
