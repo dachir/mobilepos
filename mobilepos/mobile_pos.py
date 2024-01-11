@@ -231,6 +231,13 @@ def create_invoice():
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
     cart_data = request_dict.get('cart')
+    customer = ""
+    selling_price_list =""
+    warehouse = ""
+    company = ""
+    branch = ""
+    currency = ""
+    sales_person = ""
 
     if request_dict.get('customer_name'):
         customer = request_dict.get('customer_name').strip()
