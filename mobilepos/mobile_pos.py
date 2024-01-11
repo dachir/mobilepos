@@ -231,14 +231,21 @@ def create_invoice():
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
     cart_data = request_dict.get('cart')
-    customer = request_dict.get('customer_name').strip()
-    selling_price_list = request_dict.get("selling_price_list").strip()
-    warehouse = request_dict.get("warehouse").strip()
 
-    company = request_dict.get("customer_company").strip()
-    branch = request_dict.get("customer_branch").strip()
-    currency = request_dict.get("customer_currency").strip()
-    sales_person = request_dict.get("customer_sales_person").strip()
+    if request_dict.get('customer_name'):
+        customer = request_dict.get('customer_name').strip()
+    if request_dict.get('selling_price_list'):
+        selling_price_list = request_dict.get("selling_price_list").strip()
+    if request_dict.get('warehouse'):
+        warehouse = request_dict.get("warehouse").strip()
+    if request_dict.get('customer_company'):
+        company = request_dict.get("customer_company").strip()
+    if request_dict.get('customer_branch'):
+        branch = request_dict.get("customer_branch").strip()
+    if request_dict.get('customer_currency'):
+        currency = request_dict.get("customer_currency").strip()
+    if request_dict.get('customer_sales_person'):
+        sales_person = request_dict.get("customer_sales_person").strip()
 
     invoice_details = []
     temp_batches = []
