@@ -137,7 +137,7 @@ def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
         data = frappe.db.sql(
             """
             SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
-            t1.name,t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
+            t1.customer_name as name,t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
             t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list
             FROM (
                 SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
@@ -164,9 +164,8 @@ def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
             SELECT p.name as id,p.product_code,p.title,p.unit_type,p.unit_value,p.brand,p.category_ids,p.purchase_price, p.selling_price,p.discount_type,p.discount,
                 p.tax, b.actual_qty as quantity,p.image,p.order_count,p.supplier_id,p.company_id, p.creation as createdAt, p.modified as updatedAt
             FROM `tabShop` s CROSS JOIN `tabShop Product` p INNER JOIN tabBin b ON p.product_code = b.item_code AND s.warehouse = b.warehouse
-            WHERE s.name = %(shop)s
             LIMIT %(limit)s OFFSET %(offset)s
-            """,{"shop":shop, "limit":int(limit),"offset":int(offset)}, as_dict=1
+            """,{"limit":int(limit),"offset":int(offset)}, as_dict=1
         )
 
         if name:
