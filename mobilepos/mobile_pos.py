@@ -316,6 +316,7 @@ def create_invoice():
                 "sales_reconciliation": sales_person,
                 "selling_price_list": selling_price_list,
                 "items": invoice_details,
+                "ignore_default_payment_terms_template": 0,
             }
         )
     try:
