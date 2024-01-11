@@ -230,7 +230,7 @@ def create_invoice():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
-    cart_data = request_dict.get('cart').strip()
+    cart_data = request_dict.get('cart')
     customer = request_dict.get('customer_name').strip()
     selling_price_list = request_dict.get("selling_price_list").strip()
     warehouse = request_dict.get("warehouse").strip()
