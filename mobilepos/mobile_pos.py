@@ -2,6 +2,7 @@ import frappe
 from frappe import _
 from datetime import datetime
 from frappe.core.doctype.user.user import get_timezones
+from erpnext.setup.utils import get_exchange_rate
 
 @frappe.whitelist()
 def configuration(user):
@@ -97,6 +98,8 @@ def get_categories(shop, limit=10, offset=0):
 @frappe.whitelist()
 def get_invoices(name):
     data = frappe.get_doc("Sales Invoice", name)
+    tax_id = frappe.db.get_value("Customer", data.customer, "tax_id")
+    data.update({"tax_id":tax_id})
     return frappe._dict({
         "success": True,
         "invoice": data,
@@ -104,13 +107,14 @@ def get_invoices(name):
 
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
-def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
-    data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
-    data_list =  frappe._dict({
-        "total": len(data),
-        "limit": limit,
-        "offset": offset,
-        list_name: data,
+def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None):
+    if not doctype in ["Shop Invoice"]:
+        data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
+        data_list =  frappe._dict({
+            "total": len(data),
+            "limit": limit,
+            "offset": offset,
+            list_name: data,
     })
     if doctype in ["Shop Item Category"]:
 
@@ -138,7 +142,7 @@ def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
             """
             SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
             t1.customer_name as name,t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
-            t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list
+            t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id
             FROM (
                 SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
                 FROM tabShop s INNER JOIN tabCustomer c ON s.territory = c.territory 
@@ -164,6 +168,8 @@ def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
             SELECT p.name as id,p.product_code,p.title,p.unit_type,p.unit_value,p.brand,p.category_ids,p.purchase_price, p.selling_price,p.discount_type,p.discount,
                 p.tax, b.actual_qty as quantity,p.image,p.order_count,p.supplier_id,p.company_id, p.creation as createdAt, p.modified as updatedAt
             FROM `tabShop` s CROSS JOIN `tabShop Product` p INNER JOIN tabBin b ON p.product_code = b.item_code AND s.warehouse = b.warehouse
+            INNER JOIN tabItem i ON i.name = p.product_code
+            WHERE i.disabled = 0
             LIMIT %(limit)s OFFSET %(offset)s
             """,{"limit":int(limit),"offset":int(offset)}, as_dict=1
         )
@@ -171,6 +177,22 @@ def get_documents(doctype,list_name,shop, limit=10, offset=0,name=None):
         if name:
             # Filter data where the name starts with name
             data = [entry for entry in data if name in entry['title'].lower()]
+
+        data_list =  frappe._dict({
+            "total": len(data),
+            "limit": limit,
+            "offset": offset,
+            list_name: data,
+        })
+
+    elif doctype in ["Shop Invoice"]:
+        data = frappe.db.sql(
+            """
+            SELECT i.name as invoice_number, i.posting_date as date, i.net_total, i.paid_amount, i.outstanding_amount, i.customer
+            FROM `tabSales Invoice` i INNER JOIN `tabShop` s ON i.sales_reconciliation = s.sales_person
+            WHERE i.outstanding_amount > 0 AND s.name= %(shop)s AND i.customer = %(name)s AND i.docstatus = 1
+            """,{"shop":shop,"name":name}, as_dict=1
+        )
 
         data_list =  frappe._dict({
             "total": len(data),
@@ -345,3 +367,62 @@ def create_invoice():
         
     return str(sale.name)
 
+
+@frappe.whitelist()
+def get_name_list(doctype,filters=None, limit=10, offset=0):
+    data = []
+    if filters:
+        data = frappe.db.get_list(doctype, filters=filters, limit=limit,limit_start=offset)
+    else:
+        data = frappe.db.get_list(doctype)
+
+    names = []
+    for d in data:
+        names.append(d.name)
+
+    return names
+
+
+@frappe.whitelist()
+def create_payment_entry():
+    payment = {}
+    # Get the request data
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+    mode_of_payment = request_dict.get("mode_of_payment").strip()
+    company = request_dict.get("company").strip()
+
+    data = frappe.db.sql(
+        """
+        SELECT m.default_account,a.account_currency
+        FROM `tabMode of Payment Account` m INNER JOIN tabAccount a ON a.name = m.default_account
+        WHERE m.parent = %s AND m.company = %s
+        """,(mode_of_payment,company), as_dict = 1
+    )
+    
+    account = data[0].default_account
+    account_currency = data[0].account_currency
+    #exchange_rate = get_exchange_rate("USD","CDF") //todo
+
+    received_amount = request_dict.get('paid_amount')
+    request_dict.update({
+        "doctype": "Payment Entry",
+        "received_amount": received_amount,
+        "target_exchange_rate": 1.0,
+        "paid_to": account,
+        "paid_to_account_currency": account_currency,
+    })
+
+    try:
+        payment = frappe.get_doc(request_dict)
+        payment.insert()
+        payment.submit()
+    except frappe.DoesNotExistError:
+        return None
+    except Exception as e:
+    # Handle other exceptions by logging or custom logic
+        frappe.throw(f"An error occurred: {str(e)}")
+        
+    return str(payment.name)
+    

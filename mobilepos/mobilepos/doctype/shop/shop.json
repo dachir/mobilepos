@@ -36,6 +36,7 @@
   "column_break_q9t4a",
   "password",
   "last_name",
+  "address_name",
   "roles_section",
   "order",
   "return",
@@ -324,12 +325,18 @@
    "fieldtype": "Link",
    "label": "Sales Person",
    "options": "Sales Person"
+  },
+  {
+   "fieldname": "address_name",
+   "fieldtype": "Link",
+   "label": "Address",
+   "options": "Address"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-09 18:03:28.187314",
+ "modified": "2024-01-17 20:21:04.958865",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
