@@ -253,6 +253,7 @@ def create_invoice():
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
     cart_data = request_dict.get('cart')
+    shop = ""
     customer = ""
     selling_price_list =""
     warehouse = ""
@@ -275,6 +276,8 @@ def create_invoice():
         currency = request_dict.get("customer_currency").strip()
     if request_dict.get('customer_sales_person'):
         sales_person = request_dict.get("customer_sales_person").strip()
+    if request_dict.get('shop'):
+        shop = request_dict.get("shop").strip()
 
     invoice_details = []
     temp_batches = []
@@ -353,6 +356,7 @@ def create_invoice():
                 "selling_price_list": selling_price_list,
                 #"price_list_currency": currency,
                 #"conversion_rate": 1.0,
+                "shop":shop,
                 "items": invoice_details,
                 #"ignore_default_payment_terms_template": 0,
             }
