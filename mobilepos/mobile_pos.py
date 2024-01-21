@@ -153,7 +153,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
         )
         if name:
             # Filter data where the name starts with name
-            data = [entry for entry in data if name in entry['name'].lower()]
+            data = [entry for entry in data if name in entry['customer_name'].lower()]
 
         data_list =  frappe._dict({
             "total": len(data),
