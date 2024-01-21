@@ -363,14 +363,14 @@ def create_invoice():
         )
     try:
         if invoice_details:
-			tax = frappe._dict({
-				"charge_type": "On Net Total",
-				"account_head": "VAT 15% - AHW",
-				"description": "VAT 15% @ 15.0",
-				"rate": 15.0,
-				"doctype": "Sales Taxes and Charges",
-			})
-			args.update({"taxes": [tax]})
+            tax = frappe._dict({
+                "charge_type": "On Net Total",
+                "account_head": "VAT 15% - AHW",
+                "description": "VAT 15% @ 15.0",
+                "rate": 15.0,
+                "doctype": "Sales Taxes and Charges",
+            })
+            args.update({"taxes": [tax]})
             sale = frappe.get_doc(args)
             #sale.ignore_pricing_rule = 1
             sale.insert()
