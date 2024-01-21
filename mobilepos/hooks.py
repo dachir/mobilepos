@@ -199,3 +199,9 @@ app_license = "MIT"
 # auth_hooks = [
 #	"mobilepos.auth.validate"
 # ]
+
+fixtures = [
+    {"dt": "Custom Field", "filters": [["module", "=", "Mobilepos"]]},
+    {"dt": "Client Script", "filters": [["enabled", "=", 1],["module", "=", "Mobilepos"]]},
+    {"dt": "Server Script", "filters": [["disabled", "=", 0],["module", "=", "Mobilepos"]]},
+]
