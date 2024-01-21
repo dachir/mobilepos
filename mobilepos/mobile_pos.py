@@ -396,6 +396,7 @@ def create_payment_entry():
     request_dict = frappe.parse_json(request_data_str)
     mode_of_payment = request_dict.get("mode_of_payment").strip()
     company = request_dict.get("company").strip()
+    shop = request_dict.get("shop").strip()
 
     data = frappe.db.sql(
         """
@@ -416,6 +417,7 @@ def create_payment_entry():
         "target_exchange_rate": 1.0,
         "paid_to": account,
         "paid_to_account_currency": account_currency,
+        "shop": shop,
     })
 
     try:
