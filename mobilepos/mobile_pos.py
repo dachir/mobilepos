@@ -82,9 +82,9 @@ def incomeRevenue(shop):
 def incomeSummary(shop,cond):
     condition = " "
     if cond == "today":
-        condition += " AND date = CURDATE()"
+        condition += " AND posting_date = CURDATE()"
     elif cond == "month":
-        condition += " AND MONTH(date) = MONTH(CURDATE())"
+        condition += " AND MONTH(posting_date) = MONTH(CURDATE())"
     data = frappe.db.sql(
         """
         SELECT (SELECT SUM(net_total) as net_total
