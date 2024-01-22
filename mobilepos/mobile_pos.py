@@ -23,6 +23,37 @@ def configuration(user):
     })
 
 @frappe.whitelist()
+def incomeComparision(shop):
+    year_income = frappe.db.sql(
+        """
+        SELECT  `year`, `month`, IFNULL(net_total, 0) as net_total
+        FROM(
+            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(net_total) as net_total
+            FROM `tabSales Invoice`
+            WHERE shop = %s AND YEAR(posting_date) = YEAR(CURDATE())
+            GROUP BY YEAR(posting_date), MONTH(posting_date)
+        ) AS t
+        """,(shop), as_dict=1
+    )
+    last_year_income = frappe.db.sql(
+        """
+        SELECT  `year`, `month`, IFNULL(net_total, 0) as net_total
+        FROM(
+            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(net_total) as net_total
+            FROM `tabSales Invoice`
+            WHERE shop = %s AND (YEAR(posting_date) = YEAR(CURDATE()) -  1)
+            GROUP BY YEAR(posting_date), MONTH(posting_date)
+        ) AS t
+        """,(shop), as_dict=1
+    )
+
+    return frappe._dict({
+        "year_income": year_income,
+        "last_year_income": last_year_income,
+    })
+
+
+@frappe.whitelist()
 def incomeRevenue(shop):
     income_data = frappe.db.sql(
         """
@@ -46,6 +77,29 @@ def incomeRevenue(shop):
         "year_wise_income": income_data,
     })
 
+
+@frappe.whitelist()
+def incomeSummary(shop,cond):
+    condition = " "
+    if cond == "today":
+        condition += " AND date = CURDATE()"
+    elif cond == "month":
+        condition += " AND MONTH(date) = MONTH(CURDATE())"
+    data = frappe.db.sql(
+        """
+        SELECT (SELECT SUM(net_total) as net_total
+        FROM `tabSales Invoice`
+        WHERE shop=%s AND YEAR(posting_date) = YEAR(CURDATE()) {condition}) as net_total,
+        (SELECT SUM(paid_amount) as paid_amount
+        FROM `tabPayment Entry`
+        WHERE shop=%s AND YEAR(posting_date) = YEAR(CURDATE()) {condition}) as paid_amount
+
+        """.format(condition=condition),(shop,shop),as_dict=1
+    )
+
+    return frappe._dict({
+        "revenueSummary": data[0],
+    })
 
 @frappe.whitelist()
 def revenueSumary(shop,cond):
