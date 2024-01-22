@@ -98,7 +98,7 @@ def incomeSummary(shop,cond):
     )
 
     return frappe._dict({
-        "revenueSummary": data[0],
+        "incomeSummary": data[0],
     })
 
 @frappe.whitelist()
