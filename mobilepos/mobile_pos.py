@@ -223,11 +223,11 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 p.tax, SUM(b.actual_qty) as quantity,p.image,p.order_count,p.supplier_id,p.company_id, p.creation as createdAt, p.modified as updatedAt
             FROM `tabShop` s CROSS JOIN `tabShop Product` p INNER JOIN tabBin b ON p.product_code = b.item_code AND s.warehouse = b.warehouse
             INNER JOIN tabItem i ON i.name = p.product_code
-            WHERE i.disabled = 0
+            WHERE i.disabled = 0 and b.actual_qty > 0 AND s.name = %(shop)s
             GROUP BY p.name,p.product_code,p.title,p.unit_type,p.unit_value,p.brand,p.category_ids,p.purchase_price, p.selling_price,p.discount_type,p.discount,
                 p.tax,p.image,p.order_count,p.supplier_id,p.company_id, p.creation, p.modified
             LIMIT %(limit)s OFFSET %(offset)s
-            """,{"limit":int(limit),"offset":int(offset)}, as_dict=1
+            """,{"shop":shop, "limit":int(limit),"offset":int(offset)}, as_dict=1
         )
 
         if name:
