@@ -100,7 +100,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-04 22:17:25.664234",
+ "modified": "2024-02-05 17:10:06.089252",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Customer",
@@ -116,6 +116,19 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "POS Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   }

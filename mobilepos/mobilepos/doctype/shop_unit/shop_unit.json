@@ -32,7 +32,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-06 10:17:43.559776",
+ "modified": "2024-02-05 17:09:06.975252",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Unit",
@@ -48,6 +48,19 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "POS Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   }
