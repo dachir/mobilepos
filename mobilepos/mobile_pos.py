@@ -200,14 +200,14 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             FROM (
                 SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
                 FROM tabShop s INNER JOIN tabCustomer c ON s.territory = c.territory 
-                WHERE s.name = %(shop)s 
+                WHERE s.name = %(shop)s and lower(c.customer_name) LIKE CONCAT('%%',lower(%(name)s),'%%')
             ) AS t1
             LIMIT %(limit)s OFFSET %(offset)s
-            """,{"shop":shop, "limit":int(limit),"offset":int(offset)}, as_dict=1
+            """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
         )
-        if name:
+        #if name:
             # Filter data where the name starts with name
-            data = [entry for entry in data if name in entry['customer_name'].lower()]
+        #    data = [entry for entry in data if name in entry['customer_name'].lower()]
 
         data_list =  frappe._dict({
             "total": len(data),
