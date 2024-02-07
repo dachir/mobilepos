@@ -302,7 +302,7 @@ def create_order():
 
 
 @frappe.whitelist()
-def create_invoice():
+def create_invoice(name=None):
     sale = {}
     # Get the request data
     request_data = frappe.request.data
@@ -396,27 +396,19 @@ def create_invoice():
             invoice_details.append(details)
 
     args = frappe._dict(
-            {
-                "doctype": "Sales Invoice",
-                "customer": customer,
-                "company": company,
-                #"set_posting_time": 1,
-                #"posting_date": frappe.utils.getdate(),
-                #"due_date": frappe.utils.getdate(),
-                #"currency": currency,
-                "branch": branch,
-                "set_warehouse": warehouse,
-                #"docstatus": 0,
-                "update_stock": 1,
-                "sales_reconciliation": sales_person,
-                "selling_price_list": selling_price_list,
-                #"price_list_currency": currency,
-                #"conversion_rate": 1.0,
-                "shop":shop,
-                "items": invoice_details,
-                #"ignore_default_payment_terms_template": 0,
-            }
-        )
+        {
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "company": company,
+            "branch": branch,
+            "set_warehouse": warehouse,
+            "update_stock": 1,
+            "sales_reconciliation": sales_person,
+            "selling_price_list": selling_price_list,
+            "shop":shop,
+            "items": invoice_details,
+        }
+    )
     try:
         if invoice_details:
             tax = frappe._dict({
@@ -429,8 +421,12 @@ def create_invoice():
             args.update({"taxes": [tax]})
             sale = frappe.get_doc(args)
             #sale.ignore_pricing_rule = 1
-            sale.insert()
-            sale.submit()
+            if not name:
+                sale.insert()
+            else :
+                args.update({"name": name})
+                sale.save()
+            #sale.submit()
     except frappe.DoesNotExistError:
             return None
         
