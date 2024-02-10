@@ -261,6 +261,62 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
 
 
 @frappe.whitelist()
+def get_daily_report(limit=10, offset=0):
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+
+    shop = request_dict.get('shop', None)
+    start = request_dict.get('start', None)
+    end = request_dict.get('end', None)
+    code = request_dict.get('code', None)
+
+    condition = ""
+    parameters = {"shop": shop}
+
+    if start:
+        condition += " AND posting_date >= %(start)s"
+        parameters["start"] = start
+    if end:
+        condition += " AND posting_date <= %(end)s"
+        parameters["end"] = end
+
+    si_condition = ""
+    if code:
+        si_condition += " AND customer = %(customer)s"
+        parameters["customer"] = code
+
+    pe_condition = ""
+    if code:
+        pe_condition += " AND party = %(party)s"
+        parameters["party"] = code
+
+    data = frappe.db.sql(
+        """
+        SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount
+        FROM(
+            SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount
+            FROM `tabSales Invoice`
+            WHERE shop=%(shop)s {condition} {si_condition}
+            GROUP BY posting_date
+            UNION
+            SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount
+            FROM `tabPayment Entry`
+            WHERE shop=%(shop)s {condition} {pe_condition}
+            GROUP BY posting_date
+        ) AS t
+        GROUP BY t.posting_date
+        """.format(condition=condition, si_condition=si_condition, pe_condition=pe_condition),parameters, as_dict=1
+    )
+    return frappe._dict({
+        "total": len(data),
+        "limit": limit,
+        "offset": offset,
+        "categories": data,
+    })
+
+
+@frappe.whitelist()
 def create_order():
     # Get the request data
     request_data = frappe.request.data
@@ -302,7 +358,8 @@ def create_order():
 
 
 @frappe.whitelist()
-def create_invoice(name=None):
+def create_invoice():
+    name=None
     sale = {}
     # Get the request data
     request_data = frappe.request.data
@@ -317,7 +374,8 @@ def create_invoice(name=None):
     branch = ""
     currency = ""
     sales_person = ""
-
+    if request_dict.get('invoice_name'):
+        name = request_dict.get('invoice_name').strip()
     if request_dict.get('customer_name'):
         customer = request_dict.get('customer_name').strip()
     if request_dict.get('selling_price_list'):
