@@ -484,7 +484,8 @@ def create_invoice():
             else :
                 args.update({"name": name})
                 sale.save()
-            #sale.submit()
+            #add submit
+            sale.submit()
     except frappe.DoesNotExistError:
             return None
         
