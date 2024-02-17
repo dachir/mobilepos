@@ -211,9 +211,9 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
 
         for i in data:
             outstanding_amt = get_customer_outstanding(
-                i.name, company, ignore_outstanding_sales_order=d.bypass_credit_limit_check
+                i.name, company, ignore_outstanding_sales_order=i.bypass_credit_limit_check
             )
-            credit_limit = get_credit_limit(d.name, company)
+            credit_limit = get_credit_limit(i.name, company)
 
             bal = flt(credit_limit) - flt(outstanding_amt)
             i.update({
