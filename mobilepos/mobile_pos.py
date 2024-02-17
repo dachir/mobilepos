@@ -1,8 +1,10 @@
 import frappe
 from frappe import _
+from frappe.utils import flt
 from datetime import datetime
 from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
+from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 
 @frappe.whitelist()
 def configuration(user):
@@ -161,7 +163,7 @@ def get_invoices(name):
 
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
-def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None):
+def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None, company=None):
     if not doctype in ["Shop Invoice"]:
         data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
         data_list =  frappe._dict({
@@ -206,6 +208,17 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             LIMIT %(limit)s OFFSET %(offset)s
             """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
         )
+
+        for i in data:
+            outstanding_amt = get_customer_outstanding(
+                i.name, company, ignore_outstanding_sales_order=d.bypass_credit_limit_check
+            )
+            credit_limit = get_credit_limit(d.name, company)
+
+            bal = flt(credit_limit) - flt(outstanding_amt)
+            i.update({
+                "balance": bal
+            })
         #if name:
             # Filter data where the name starts with name
         #    data = [entry for entry in data if name in entry['customer_name'].lower()]
