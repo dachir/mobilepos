@@ -416,7 +416,17 @@ def create_invoice():
         
         from erpplus.utils import get_batch_qty_2
         max_qty = i["quantity"]
-        batches = get_batch_qty_2(warehouse=warehouse, item_code = i["product_code"], posting_date = frappe.utils.getdate(), posting_time = datetime.now().strftime("%H:%M:%S"))
+        #batches = get_batch_qty_2(warehouse=warehouse, item_code = i["product_code"], posting_date = frappe.utils.getdate(), posting_time = datetime.now().strftime("%H:%M:%S"))
+
+        batches = frappe.db.sql(
+            """
+            SELECT sle.batch_no, SUM(sle.actual_qty) AS qty
+            FROM `tabStock Ledger Entry` sle
+            WHERE (sle.is_cancelled = 0) AND (sle.item_code = %(item_code)s) AND (sle.warehouse = %(warehouse)s) AND (sle.actual_qty <> 0)
+            GROUP BY sle.batch_no
+            HAVING SUM(sle.actual_qty) > 0
+            """, {"warehouse": warehouse, "item_code": i["product_code"]}, as_dict = 1
+        )
 
         for b in batches:
             t_batch = frappe._dict({"batch_no" : b.batch_no,"item_code":i["product_code"], "qty": b.qty})
