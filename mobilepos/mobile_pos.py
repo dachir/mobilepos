@@ -202,7 +202,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id
             FROM (
                 SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
-                FROM tabShop s INNER JOIN tabCustomer c ON s.territory = c.territory 
+                FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
                 WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%')
             ) AS t1
             LIMIT %(limit)s OFFSET %(offset)s
@@ -575,4 +575,5 @@ def create_payment_entry():
         frappe.throw(f"An error occurred: {str(e)}")
         
     return str(payment.name)
-    
+
+
