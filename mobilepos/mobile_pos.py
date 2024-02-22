@@ -528,6 +528,9 @@ def create_invoice():
 @frappe.whitelist()
 def get_name_list(doctype,filters=None, limit=10, offset=0):
     data = []
+    if doctype in ["Sales Order", "Sales Invoice", "Payment Entry"]:
+        filters.update({"docstatus" : 1})
+        
     if filters:
         data = frappe.db.get_list(doctype, filters=filters, limit=limit,limit_start=offset)
     else:
