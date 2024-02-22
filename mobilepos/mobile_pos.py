@@ -8,18 +8,18 @@ from erpnext.selling.doctype.customer.customer import get_credit_limit, get_cust
 
 @frappe.whitelist()
 def configuration(user):
-    data = frappe.db.get_all("Shop", ["*"], filters={"user":user})
+    data = frappe.get_doc("Shop", {"user":user})
     return frappe._dict({
-        "business_info": data[0],
-        "currency_symbol": data[0].currency_symbol,
+        "business_info": data,
+        "currency_symbol": data.currency_symbol,
         "base_urls": {
-            "category_image_url": data[0].category_image_url,
-            "brand_image_url": data[0].brand_image_url,
-            "product_image_url": data[0].product_image_url,
-            "supplier_image_url": data[0].supplier_image_url,
-            "shop_image_url": data[0].shop_image_url,
-            "admin_image_url": data[0].admin_image_url,
-            "customer_image_url": data[0].customer_image_url,
+            "category_image_url": data.category_image_url,
+            "brand_image_url": data.brand_image_url,
+            "product_image_url": data.product_image_url,
+            "supplier_image_url": data.supplier_image_url,
+            "shop_image_url": data.shop_image_url,
+            "admin_image_url": data.admin_image_url,
+            "customer_image_url": data.customer_image_url,
         },
         "time_zone": get_timezones(),
     })
