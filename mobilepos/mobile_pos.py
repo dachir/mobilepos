@@ -529,8 +529,8 @@ def create_invoice():
 def get_name_list(doctype,filters=None, limit=10, offset=0):
     data = []
     if doctype in ["Sales Order", "Sales Invoice", "Payment Entry"]:
-        filters.update({"docstatus" : 1})
-        
+        filters.update(["docstatus" : 1])
+
     if filters:
         data = frappe.db.get_list(doctype, filters=filters, limit=limit,limit_start=offset)
     else:
@@ -553,6 +553,7 @@ def create_payment_entry():
     mode_of_payment = request_dict.get("mode_of_payment").strip()
     company = request_dict.get("company").strip()
     shop = request_dict.get("shop").strip()
+    reference_no = request_dict.get("reference_no").strip()
 
     data = frappe.db.sql(
         """
@@ -574,6 +575,8 @@ def create_payment_entry():
         "paid_to": account,
         "paid_to_account_currency": account_currency,
         "shop": shop,
+        "reference_no": reference_no,
+        "reference_date": frappe.utils.getdate(),
     })
 
     try:
