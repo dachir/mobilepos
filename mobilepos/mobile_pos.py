@@ -138,7 +138,16 @@ def revenueSumary(shop,cond):
         "revenueSummary": data[0],
     })
     
-    
+@frappe.whitelist()
+def get_settings():
+    data = frappe.get_doc('Shop Settings')
+    return frappe._dict({
+        "total": 1,
+        "limit": 0,
+        "offset": 0,
+        "mode_of_payment": data.mode_of_payment,
+    })    
+
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
 def get_categories(shop, limit=10, offset=0):
@@ -171,7 +180,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             "limit": limit,
             "offset": offset,
             list_name: data,
-    })
+        })
     if doctype in ["Shop Item Category"]:
 
         data2 = data_list[list_name]
