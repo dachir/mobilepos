@@ -320,12 +320,12 @@ def get_daily_report(limit=10, offset=0):
         FROM(
             SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount
             FROM `tabSales Invoice`
-            WHERE shop=%(shop)s {condition} {si_condition}
+            WHERE shop=%(shop)s AND docstatus <> 2 {condition} {si_condition}
             GROUP BY posting_date
             UNION
             SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount
             FROM `tabPayment Entry`
-            WHERE shop=%(shop)s {condition} {pe_condition}
+            WHERE shop=%(shop)s AND docstatus <> 2 {condition} {pe_condition}
             GROUP BY posting_date
         ) AS t
         GROUP BY t.posting_date
