@@ -535,6 +535,7 @@ def create_invoice():
                         "doctype": "Sales Invoice Item",
                         "item_code": p["free_item"],
                         "qty": p["total_free_qty"],
+                        "rate": 0,
                         "branch": branch,
                     })
                     invoice_details.append(details)
@@ -564,7 +565,7 @@ def create_invoice():
             })
             args.update({"taxes": [tax]})
             sale = frappe.get_doc(args)
-            #sale.ignore_pricing_rule = 1
+            sale.ignore_pricing_rule = 1
             if not name:
                 sale.insert()
             else :
