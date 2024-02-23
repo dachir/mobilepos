@@ -6,6 +6,33 @@ from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 
+def get_promotion(warehouse, item, customer_group, qty):
+    data = []
+
+    data = frappe.db.sql(
+        """
+        SELECT *, (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
+        FROM(
+            SELECT DISTINCT ri.item_code, r.name,r.price_or_product_discount,
+                CASE WHEN r.same_item THEN ri.item_code ELSE r.free_item END as free_item,
+                min_qty,
+                CASE WHEN r.price_or_product_discount = 'Product' THEN free_qty ELSE 0 END  as free_qty, 
+                CASE WHEN r.price_or_product_discount = 'Price' THEN  rate ELSE 0 END as rate,
+                CASE WHEN max_qty = 0 THEN 999999999999 ELSE max_qty END as max_qty
+            FROM `tabPricing Rule` r INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
+                INNER JOIN (SELECT w.name
+                            FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
+                            ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
+            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND r.customer_group = %(customer_group)s ) AS a
+        WHERE 50 BETWEEN a.min_qty AND a.max_qty
+        """,{"warehouse": warehouse, "item": item, "customer_group":customer_group, "qty": qty}, as_dict = 1
+    )
+
+    if data:
+        return data
+    else:
+        return []
+
 @frappe.whitelist()
 def configuration(user):
     data = frappe.get_doc("Shop", {"user":user})
@@ -423,8 +450,12 @@ def create_invoice():
             continue
 
         
+        
         from erpplus.utils import get_batch_qty_2
         max_qty = i["quantity"]
+
+        customer_group = frappe.db.get_value("Customer",customer, "customer_group")
+        promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
         #batches = get_batch_qty_2(warehouse=warehouse, item_code = i["product_code"], posting_date = frappe.utils.getdate(), posting_time = datetime.now().strftime("%H:%M:%S"))
 
         batches = frappe.db.sql(
@@ -459,6 +490,9 @@ def create_invoice():
                         "batch_no": b.batch_no,
                         "branch": branch,
                     })
+                    if len(promo_data) > 0:
+                        if promo_data[0].price_or_product_discount == "Price":
+                            details.update({"rate": promo_data[0].rate})
                     invoice_details.append(details)
                     b.qty -= max_qty
                     max_qty = 0
@@ -472,6 +506,9 @@ def create_invoice():
                         "batch_no": b.batch_no,
                         "branch": branch,
                     })
+                    if len(promo_data) > 0:
+                        if promo_data[0].price_or_product_discount == "Price":
+                            details.update({"rate": promo_data[0].rate})
                     invoice_details.append(details)
                     max_qty = max_qty - b.qty
                     b.qty = 0
@@ -484,7 +521,21 @@ def create_invoice():
                 "qty": max_qty,
                 "branch": branch,
             })
+            if len(promo_data) > 0:
+                if promo_data[0].price_or_product_discount == "Price":
+                    details.update({"rate": promo_data[0].rate})
             invoice_details.append(details)
+
+        if len(promo_data) > 0:
+            for p in promo_data:
+                if p["price_or_product_discount"] == "Product":
+                    details = frappe._dict({
+                        "doctype": "Sales Invoice Item",
+                        "item_code": p["free_item"],
+                        "qty": p["total_free_qty"],
+                        "branch": branch,
+                    })
+                    invoice_details.append(details)
 
     args = frappe._dict(
         {
@@ -528,8 +579,11 @@ def create_invoice():
 @frappe.whitelist()
 def get_name_list(doctype,filters=None, limit=10, offset=0):
     data = []
+    if filters == None:
+        filters = []
+
     if doctype in ["Sales Order", "Sales Invoice", "Payment Entry"]:
-        filters.update(["docstatus" : 1])
+        filters.append(["docstatus", "=", 1])
 
     if filters:
         data = frappe.db.get_list(doctype, filters=filters, limit=limit,limit_start=offset)
