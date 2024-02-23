@@ -6,6 +6,8 @@ from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 
+import json
+
 def get_promotion(warehouse, item, customer_group, qty):
     data = []
 
@@ -579,11 +581,14 @@ def create_invoice():
 @frappe.whitelist()
 def get_name_list(doctype,filters=None, limit=10, offset=0):
     data = []
-    if filters == None:
-        filters = []
 
     if doctype in ["Sales Order", "Sales Invoice", "Payment Entry"]:
-        filters.append(["docstatus", "=", 1])
+        if filters == None:
+            filter_list = []
+        else:
+            filter_list = json.loads(filters)
+        filter_list.append(["docstatus", "=", 1])
+        filters = json.dumps(filter_list)
 
     if filters:
         data = frappe.db.get_list(doctype, filters=filters, limit=limit,limit_start=offset)
