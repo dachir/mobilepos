@@ -536,8 +536,8 @@ def create_invoice():
                         "item_code": p["free_item"],
                         "qty": p["total_free_qty"],
                         "rate": 0,
+                        "price_list_rate": 0,
                         "branch": branch,
-                        "is_free_item": 1,
                     })
                     invoice_details.append(details)
 
