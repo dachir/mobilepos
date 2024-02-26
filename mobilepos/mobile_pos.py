@@ -444,6 +444,8 @@ def create_invoice():
         sales_person = request_dict.get("customer_sales_person").strip()
     if request_dict.get('shop'):
         shop = request_dict.get("shop").strip()
+    if request_dict.get('payment_type'):
+        payment_type = request_dict.get('payment_type')
 
     invoice_details = []
     temp_batches = []
@@ -553,6 +555,7 @@ def create_invoice():
             "selling_price_list": selling_price_list,
             "shop":shop,
             "items": invoice_details,
+            "payment_type": payment_type,
         }
     )
     try:
@@ -615,6 +618,7 @@ def create_payment_entry():
     company = request_dict.get("company").strip()
     shop = request_dict.get("shop").strip()
     reference_no = request_dict.get("reference_no").strip()
+    received_amount = request_dict.get('paid_amount')
 
     data = frappe.db.sql(
         """
@@ -628,7 +632,7 @@ def create_payment_entry():
     account_currency = data[0].account_currency
     #exchange_rate = get_exchange_rate("USD","CDF") //todo
 
-    received_amount = request_dict.get('paid_amount')
+    
     request_dict.update({
         "doctype": "Payment Entry",
         "received_amount": received_amount,
