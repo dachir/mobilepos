@@ -594,7 +594,7 @@ def create_invoice():
         if len(promo_data) > 0:
             for p in promo_data:
                 if p["price_or_product_discount"] == "Product" and p["total_free_qty"] > 0:
-                    details = dispatch_by_batch(temp_batches,None, branch, p["free_item"], p["total_free_qty"], True)
+                    details = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
                     invoice_details.extend(details)
 
     args = frappe._dict(
