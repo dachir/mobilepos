@@ -618,7 +618,7 @@ def create_invoice():
         "doctype": "Sales Team",
     })
     if sales_team:
-        args.update({"sales_team": sales_team,})
+        args.update({"sales_team": [sales_team],})
 
     if payment_type:
             args.update({"payment_type": payment_type,})
