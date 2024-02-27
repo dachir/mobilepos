@@ -589,7 +589,8 @@ def create_invoice():
         customer_group = frappe.db.get_value("Customer",customer, "customer_group")
         promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
 
-        invoice_details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty)        
+        invoice_details.extend(details)
 
         if len(promo_data) > 0:
             for p in promo_data:
