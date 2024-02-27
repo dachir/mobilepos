@@ -609,9 +609,16 @@ def create_invoice():
             "selling_price_list": selling_price_list,
             "shop":shop,
             "items": invoice_details,
-            "sales_team":[{"sales_person" : sales_person, "allocated_percentage": 100}]
         }
     )
+
+    sales_team = frappe._dict({
+        "sales_person": sales_person,
+        "allocated_percentage": 100,
+        "doctype": "Sales Team",
+    })
+    if sales_team:
+        args.update({"sales_team": sales_team,})
 
     if payment_type:
             args.update({"payment_type": payment_type,})
