@@ -409,8 +409,137 @@ def create_order():
     return str("OK")
 
 
+def get_item_batches(warehouse, item_code, promo_data, branch, max_qty):
+    """
+    Get item batches based on the given parameters.
+
+    Parameters:
+    - warehouse (str): The warehouse code.
+    - item_code (str): The item code.
+    - promo_data (list): List of promotional data.
+    - branch (str): The branch code.
+
+    Returns:
+    - list: List item batches.
+    """
+
+    batches =  frappe.db.sql(
+        """
+        SELECT sle.batch_no, SUM(sle.actual_qty) AS qty
+        FROM `tabStock Ledger Entry` sle
+        WHERE (sle.is_cancelled = 0) AND (sle.item_code = %(item_code)s) AND (sle.warehouse = %(warehouse)s) AND (sle.actual_qty <> 0)
+        GROUP BY sle.batch_no
+        HAVING SUM(sle.actual_qty) > 0
+        """, {"warehouse": warehouse, "item_code": item_code}, as_dict = 1
+    )
+
+    return dispatch_by_batch(batches,promo_data, branch, item_code, max_qty)
+
+
+
+
+def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item = False):
+    """
+    Process and dispatch items based on batches and promotional data.
+
+    Parameters:
+    - batches (list): List of item batches.
+    - promo_data (list): List of promotional data.
+    - branch (str): The branch code.
+    - item_code (str): The item code.
+    - max_qty (float): The maximum quantity to be dispatched.
+    - is_free_item (bool): Whether the item is a free item with a rate of 0.
+
+    Returns:
+    - list: List of invoice details.
+    """
+
+    invoice_details = []
+    temp_batches = []
+    for b in batches:
+        t_batch = frappe._dict({"batch_no" : b.batch_no,"item_code":item_code, "qty": b.qty})
+        temp_batches.append(t_batch)
+
+    filtered_batches = [d for d in temp_batches if d["item_code"] == item_code and d["qty"] > 0]
+
+    for b in filtered_batches:
+        if not b.qty:
+            continue
+        if b.qty <= 0:
+            continue
+
+        while b.qty > 0 and max_qty > 0:
+            if b.qty >= max_qty:
+                details = frappe._dict({
+                    "doctype": "Sales Invoice Item",
+                    "item_code": item_code,
+                    "qty": max_qty,
+                    "batch_no": b.batch_no,
+                    "branch": branch,
+                })
+                if len(promo_data) > 0:
+                    if promo_data[0].price_or_product_discount == "Price":
+                        details.update({"rate": promo_data[0].rate})
+                if is_free_item :
+                    details.update({
+                        "rate": 0,
+                        "price_list_rate": 0,
+                    })
+                invoice_details.append(details)
+                b.qty -= max_qty
+                max_qty = 0
+                temp_batches[temp_batches.index(b)] = b
+                break
+            else:
+                details = frappe._dict({
+                    "doctype": "Sales Invoice Item",
+                    "item_code": item_code,
+                    "qty": b.qty,
+                    "batch_no": b.batch_no,
+                    "branch": branch,
+                })
+                if len(promo_data) > 0:
+                    if promo_data[0].price_or_product_discount == "Price":
+                        details.update({"rate": promo_data[0].rate})
+                if is_free_item :
+                    details.update({
+                        "rate": 0,
+                        "price_list_rate": 0,
+                    })
+                invoice_details.append(details)
+                max_qty = max_qty - b.qty
+                b.qty = 0
+                temp_batches[temp_batches.index(b)] = b
+
+    if max_qty > 0:
+        details = frappe._dict({
+            "doctype": "Sales Invoice Item",
+            "item_code": item_code,
+            "qty": max_qty,
+            "branch": branch,
+        })
+        if len(promo_data) > 0:
+            if promo_data[0].price_or_product_discount == "Price":
+                details.update({"rate": promo_data[0].rate})
+        if is_free_item :
+            details.update({
+                "rate": 0,
+                "price_list_rate": 0,
+            })
+        invoice_details.append(details)
+    
+    return invoice_details, filtered_batches
+
+
 @frappe.whitelist()
 def create_invoice():
+    """
+    Create a Sales Invoice based on the provided request data.
+
+    Returns:
+    - str: Sales Invoice name.
+    """
+
     name=None
     sale = {}
     # Get the request data
@@ -426,6 +555,8 @@ def create_invoice():
     branch = ""
     currency = ""
     sales_person = ""
+    payment_type = ""
+    
     if request_dict.get('invoice_name'):
         name = request_dict.get('invoice_name').strip()
     if request_dict.get('customer_name'):
@@ -452,96 +583,19 @@ def create_invoice():
     for i in cart_data:
         if i["quantity"] == 0:
             continue
-
         
-        
-        from erpplus.utils import get_batch_qty_2
         max_qty = i["quantity"]
 
         customer_group = frappe.db.get_value("Customer",customer, "customer_group")
         promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
-        #batches = get_batch_qty_2(warehouse=warehouse, item_code = i["product_code"], posting_date = frappe.utils.getdate(), posting_time = datetime.now().strftime("%H:%M:%S"))
 
-        batches = frappe.db.sql(
-            """
-            SELECT sle.batch_no, SUM(sle.actual_qty) AS qty
-            FROM `tabStock Ledger Entry` sle
-            WHERE (sle.is_cancelled = 0) AND (sle.item_code = %(item_code)s) AND (sle.warehouse = %(warehouse)s) AND (sle.actual_qty <> 0)
-            GROUP BY sle.batch_no
-            HAVING SUM(sle.actual_qty) > 0
-            """, {"warehouse": warehouse, "item_code": i["product_code"]}, as_dict = 1
-        )
-
-        for b in batches:
-            t_batch = frappe._dict({"batch_no" : b.batch_no,"item_code":i["product_code"], "qty": b.qty})
-            temp_batches.append(t_batch)
-
-        item_code = i["product_code"]
-        filtered_batches = [d for d in temp_batches if d["item_code"] == item_code]
-
-        for b in filtered_batches:
-            if not b.qty:
-                continue
-            if b.qty <= 0:
-                continue
-
-            while b.qty > 0 and max_qty > 0:
-                if b.qty >= max_qty:
-                    details = frappe._dict({
-                        "doctype": "Sales Invoice Item",
-                        "item_code": i["product_code"],
-                        "qty": max_qty,
-                        "batch_no": b.batch_no,
-                        "branch": branch,
-                    })
-                    if len(promo_data) > 0:
-                        if promo_data[0].price_or_product_discount == "Price":
-                            details.update({"rate": promo_data[0].rate})
-                    invoice_details.append(details)
-                    b.qty -= max_qty
-                    max_qty = 0
-                    temp_batches[temp_batches.index(b)] = b
-                    break
-                else:
-                    details = frappe._dict({
-                        "doctype": "Sales Invoice Item",
-                        "item_code": i["product_code"],
-                        "qty": b.qty,
-                        "batch_no": b.batch_no,
-                        "branch": branch,
-                    })
-                    if len(promo_data) > 0:
-                        if promo_data[0].price_or_product_discount == "Price":
-                            details.update({"rate": promo_data[0].rate})
-                    invoice_details.append(details)
-                    max_qty = max_qty - b.qty
-                    b.qty = 0
-                    temp_batches[temp_batches.index(b)] = b
-
-        if max_qty > 0:
-            details = frappe._dict({
-                "doctype": "Sales Invoice Item",
-                "item_code": i["product_code"],
-                "qty": max_qty,
-                "branch": branch,
-            })
-            if len(promo_data) > 0:
-                if promo_data[0].price_or_product_discount == "Price":
-                    details.update({"rate": promo_data[0].rate})
-            invoice_details.append(details)
+        invoice_details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty)        
 
         if len(promo_data) > 0:
             for p in promo_data:
-                if p["price_or_product_discount"] == "Product":
-                    details = frappe._dict({
-                        "doctype": "Sales Invoice Item",
-                        "item_code": p["free_item"],
-                        "qty": p["total_free_qty"],
-                        "rate": 0,
-                        "price_list_rate": 0,
-                        "branch": branch,
-                    })
-                    invoice_details.append(details)
+                if p["price_or_product_discount"] == "Product" and p["total_free_qty"] > 0:
+                    details = dispatch_by_batch(temp_batches,None, branch, p["free_item"], p["total_free_qty"], True)
+                    invoice_details.extend(details)
 
     args = frappe._dict(
         {
@@ -555,9 +609,13 @@ def create_invoice():
             "selling_price_list": selling_price_list,
             "shop":shop,
             "items": invoice_details,
-            "payment_type": payment_type,
+            "sales_team":[{"sales_person" : sales_person}]
         }
     )
+
+    if payment_type:
+            args.update({"payment_type": payment_type,})
+
     try:
         if invoice_details:
             tax = frappe._dict({
@@ -568,6 +626,7 @@ def create_invoice():
                 "doctype": "Sales Taxes and Charges",
             })
             args.update({"taxes": [tax]})
+            
             sale = frappe.get_doc(args)
             sale.ignore_pricing_rule = 1
             if not name:
