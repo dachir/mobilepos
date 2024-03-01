@@ -128,13 +128,13 @@ def incomeSummary(shop,cond):
         """
         SELECT (SELECT SUM(total_qty) as total_qty
         FROM `tabSales Invoice`
-        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND doctype = 1 {condition}) as total_qty,
+        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND docstatus = 1 {condition}) as total_qty,
         (SELECT SUM(net_total) as net_total
         FROM `tabSales Invoice`
-        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND doctype = 1 {condition}) as net_total,
+        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND docstatus = 1 {condition}) as net_total,
         (SELECT SUM(paid_amount) as paid_amount
         FROM `tabPayment Entry`
-        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND doctype = 1 {condition}) as paid_amount
+        WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND docstatus = 1 {condition}) as paid_amount
 
         """.format(condition=condition),{"shop":shop},as_dict=1
     )
