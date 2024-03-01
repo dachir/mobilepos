@@ -755,7 +755,14 @@ def create_payment_entry():
 
 def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total):
     pos_doc = frappe.get_doc("Shop", shop)
-    cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
+    #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
+    cash_mode_list = frappe.db.sql(
+        """
+        SELECT mode_of_payment
+        FROM `tabShop Mode Payment`
+        WHERE parent = %s AND mode_of_payment LIKE  '%%Cash%%'
+        """, (shop), as_dict = 1
+    )
 
     cash_mode = ""
     if cash_mode_list:
