@@ -126,7 +126,10 @@ def incomeSummary(shop,cond):
         condition += " AND MONTH(posting_date) = MONTH(CURDATE())"
     data = frappe.db.sql(
         """
-        SELECT (SELECT SUM(net_total) as net_total
+        SELECT (SELECT SUM(total_qty) as total_qty
+        FROM `tabSales Invoice`
+        WHERE shop=%s AND YEAR(posting_date) = YEAR(CURDATE()) {condition}) as total_qty,
+        (SELECT SUM(net_total) as net_total
         FROM `tabSales Invoice`
         WHERE shop=%s AND YEAR(posting_date) = YEAR(CURDATE()) {condition}) as net_total,
         (SELECT SUM(paid_amount) as paid_amount
