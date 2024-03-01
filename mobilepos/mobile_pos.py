@@ -790,3 +790,4 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
         "references":[{"reference_doctype": "Sales Invoice", "reference_name": invoice, "allocated_amount": grand_total}],
         "branch": branch
     }
+    
