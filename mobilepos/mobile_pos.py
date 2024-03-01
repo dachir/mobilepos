@@ -672,7 +672,7 @@ def create_invoice():
 
             #Gestion du paiment
             if payment_type == "Cash":
-                create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, total_amount)
+                create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
                 
     except frappe.DoesNotExistError:
             return None
