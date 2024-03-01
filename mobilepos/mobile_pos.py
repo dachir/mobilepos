@@ -8,6 +8,14 @@ from erpnext.selling.doctype.customer.customer import get_credit_limit, get_cust
 
 import json
 
+def get_balance(customer, company):
+    outstanding_amt = get_customer_outstanding(
+        customer, company, ignore_outstanding_sales_order=i.bypass_credit_limit_check
+    )
+    credit_limit = get_credit_limit(customer, company)
+
+    return flt(credit_limit) - flt(outstanding_amt)
+
 def get_promotion(warehouse, item, customer_group, qty):
     data = []
 
@@ -556,6 +564,7 @@ def create_invoice():
     currency = ""
     sales_person = ""
     payment_type = ""
+    total_amount = 0.0
     
     if request_dict.get('invoice_name'):
         name = request_dict.get('invoice_name').strip()
@@ -577,6 +586,18 @@ def create_invoice():
         shop = request_dict.get("shop").strip()
     if request_dict.get('payment_type'):
         payment_type = request_dict.get('payment_type')
+    if request_dict.get('total_amount'):
+        total_amount = request_dict.get('total_amount')
+        
+    if payment_type == "Credit":
+        outstanding_amt = get_customer_outstanding(
+            customer, company, ignore_outstanding_sales_order=i.bypass_credit_limit_check
+        )
+        credit_limit = get_credit_limit(customer, company)
+        total_out = flt(outstanding_amt) + flt(total_amount)
+        bal = flt(credit_limit) - total_out
+        if bal < 0 :
+            frappe.throw("The credit limit is {0}. The outstanding amount is {1}. You can no more add invoices!").format(str(credit_limit), str(total_out))
 
     invoice_details = []
     temp_batches = []
@@ -648,6 +669,11 @@ def create_invoice():
                 sale.save()
             #add submit
             sale.submit()
+
+            #Gestion du paiment
+            if payment_type == "Cash":
+                create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, total_amount)
+                
     except frappe.DoesNotExistError:
             return None
         
@@ -727,4 +753,40 @@ def create_payment_entry():
         
     return str(payment.name)
 
+def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total):
+    pos_doc = frappe.get_doc("Shop", shop)
+    cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
 
+    cash_mode = ""
+    if cash_mode_list:
+        cash_mode = cash_mode_list[0].mode_of_payment
+    else:
+        # Handle the case when no cash mode is found
+        frappe.throw("No cash mode found for the shop.")
+
+    data = frappe.db.sql(
+        """
+        SELECT m.default_account,a.account_currency
+        FROM `tabMode of Payment Account` m INNER JOIN tabAccount a ON a.name = m.default_account
+        WHERE m.parent = %s AND m.company = %s
+        """,(cash_mode,company), as_dict = 1
+    )
+
+    account = data[0].default_account
+    account_currency = data[0].account_currency
+
+    args = {
+        "doctype": "Payment Entry",
+        "party_type": "Customer",
+        "party": customer,
+        "paid_amount": grand_total,
+        "received_amount": grand_total,
+        "target_exchange_rate": 1.0,
+        "paid_to": account,
+        "paid_to_account_currency": account_currency,
+        "shop": shop,
+        "reference_no": "Cash Sales",
+        "reference_date": frappe.utils.getdate(),
+        "references":[{"reference_doctype": "Sales Invoice", "reference_name": invoice, "allocated_amount": grand_total}],
+        "branch": branch
+    }

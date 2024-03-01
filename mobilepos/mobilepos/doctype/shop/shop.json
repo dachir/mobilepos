@@ -26,6 +26,7 @@
   "pagination_limit",
   "footer_text",
   "stock_limit",
+  "serial_number",
   "column_break_9yr35",
   "time_zone",
   "vat_reg_no",
@@ -338,12 +339,17 @@
    "fieldtype": "Table MultiSelect",
    "label": "Mode of Payment",
    "options": "Shop Mode Payment"
+  },
+  {
+   "fieldname": "serial_number",
+   "fieldtype": "Data",
+   "label": "Serial Number"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-22 12:04:13.811277",
+ "modified": "2024-02-28 18:16:29.655875",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
