@@ -353,14 +353,14 @@ def get_daily_report(limit=10, offset=0):
 
     data = frappe.db.sql(
         """
-        SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount
+        SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, total_qty
         FROM(
-            SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount
+            SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty
             FROM `tabSales Invoice`
             WHERE shop=%(shop)s AND docstatus <> 2 {condition} {si_condition}
             GROUP BY posting_date
             UNION
-            SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount
+            SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount, 0 AS total_qty
             FROM `tabPayment Entry`
             WHERE shop=%(shop)s AND docstatus <> 2 {condition} {pe_condition}
             GROUP BY posting_date
@@ -797,4 +797,7 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
         "references":[{"reference_doctype": "Sales Invoice", "reference_name": invoice, "allocated_amount": grand_total}],
         "branch": branch
     }
+
+    pay_doc = frappe.get_doc(args)
+    pay_doc.submit()
     
