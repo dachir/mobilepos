@@ -260,7 +260,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
 
         for i in data:
             outstanding_amt = get_customer_outstanding(
-                i.name, company, ignore_outstanding_sales_order=i.bypass_credit_limit_check
+                i.name, company, ignore_outstanding_sales_order=True
             )
             credit_limit = get_credit_limit(i.name, company)
 
@@ -594,7 +594,7 @@ def create_invoice():
         
     if payment_type == "Credit":
         outstanding_amt = get_customer_outstanding(
-            customer, company, ignore_outstanding_sales_order=i.bypass_credit_limit_check
+            customer, company, ignore_outstanding_sales_order=True
         )
         credit_limit = get_credit_limit(customer, company)
         total_out = flt(outstanding_amt) + flt(total_amount)
