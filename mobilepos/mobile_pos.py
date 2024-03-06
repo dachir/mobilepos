@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate, get_time
 from datetime import datetime
 from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
@@ -591,8 +591,15 @@ def create_invoice():
         payment_type = request_dict.get('payment_type')
     if request_dict.get('total_amount'):
         total_amount = request_dict.get('total_amount')
+
+    shop_doc = frappe.get_doc("Shop", shop)
         
     if payment_type == "Credit":
+        if not shop_doc.unlimited_credit : 
+            total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+            if flt(shop_doc.credit_limit) < total_pending :
+                frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        
         outstanding_amt = get_customer_outstanding(
             customer, company, ignore_outstanding_sales_order=True
         )
@@ -804,3 +811,115 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
     pay_doc = frappe.get_doc(args)
     pay_doc.submit()
     
+
+def get_dates_between(start_date, end_date):
+    """
+    Get all dates between start_date and end_date (inclusive).
+    
+    Args:
+    - start_date (str): Start date in the format 'YYYY-MM-DD'.
+    - end_date (str): End date in the format 'YYYY-MM-DD'.
+    
+    Returns:
+    - list: List of date objects between start_date and end_date.
+    """
+    start_date_obj = frappe.utils.getdate(start_date)
+    end_date_obj = frappe.utils.getdate(end_date)
+
+    # Calculate the number of days between start_date and end_date
+    delta = end_date_obj - start_date_obj
+
+    # Generate a list of dates between start_date and end_date
+    dates_list = [start_date_obj + timedelta(days=i) for i in range(delta.days + 1)]
+
+    return dates_list
+
+
+@frappe.whitelist()
+def get_sku_wise_daily_report(limit=10, offset=0):
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+
+    shop = request_dict.get('shop', None)
+    start = request_dict.get('start', None)
+    end = request_dict.get('end', None) 
+
+    dates_list = get_dates_between(start, end)
+    
+    shop_doc = frappe.get_doc("Shop", shop)
+    company_doc = frappe.get_doc("Company", shop_doc.company)
+    company_address = frappe.get_doc("Address", company_doc.name)
+    
+    sales_person = shop_doc.sales_person
+    condition = ""
+    parameters = {"shop": shop}
+
+    data = []
+
+    end_limit = limit + offset if limit + offset < len(dates_list) else len(dates_list) 
+    start_limit = offset  if offset < end else end
+    for d in dates_list[start_limit: end_limit]:
+        sum_doc = frappe.db.sql(
+            """
+            SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, total_qty, grand_total, total_tax
+            FROM(
+                SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty, 
+                    SUM(grand_total) AS grand_total, SUM(total_taxes_and_charges) AS total_tax,
+                    SUM(CASE WHEN payment_type = 'Cash' THEN grand_total ELSE 0 END) AS total_cash,
+                    SUM(CASE WHEN payment_type <> 'Cash' THEN grand_total ELSE 0 END) AS total_credit
+                FROM `tabSales Invoice`
+                WHERE shop=%(shop)s AND docstatus = 1 AND posting_date = %(date)s
+                GROUP BY posting_date
+                UNION
+                SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount, 0 AS total_qty, 
+                    0 AS grand_total, 0 AS total_tax, 0 AS total_cash, 0 AS total_credit
+                FROM `tabPayment Entry`
+                WHERE shop=%(shop)s AND docstatus = 1  AND posting_date = %(date)s
+                GROUP BY posting_date
+            ) AS t
+            GROUP BY t.posting_date
+            """, {"shop": shop, "date": d}, as_dict=1
+        )
+        
+        details_doc = frappe.db.sql(
+            """
+            SELECT d.item_code, SUM(d.qty) AS qty, MAX(d.rate) AS rate, SUM(d.amount) AS amount, 
+                SUM(JSON_EXTRACT(d.item_tax_rate,'$.VAT 15% - AHW') / 100 * d.amount) AS tax_amount,
+                SUM((100 + JSON_EXTRACT(d.item_tax_rate,'$.VAT 15% - AHW')) / 100 * d.amount) AS total
+            FROM `tabSales Invoice Item` d 
+            INNER JOIN `tabSales Invoice` i ON d.parent = i.name
+            WHERE i.shop = %(shop)s AND posting_date = %(date)s AND i.docstatus = 1
+            GROUP BY d.item_code
+            """, {"shop": shop, "date": d}, as_dict=1
+        )
+        
+        details = []
+        details.extend(details_doc)
+        args = {
+            "shop": shop,
+            "address": company_address.pincode + ", " + company_address.address_line1,
+            "vat_no": company_address.vat_reg_no,
+            "branch": shop_doc.branch,
+            "total_qty": sum_doc[0].total_qty,
+            "date": d,
+            "grand_total": sum_doc[0].grand_total,
+            "total_cash": sum_doc[0].total_cash,
+            "total_credit": sum_doc[0].total_credit,
+            "paid_amount": sum_doc[0].paid_amount,
+            "cash_value": sum_doc[0].total_credit - sum_doc[0].paid_amount,
+            "details": details,
+        }
+        
+        data.append(args)
+
+    return frappe._dict({
+        "total": len(data),
+        "limit": limit,
+        "offset": offset,
+        "sku_daily_report": data,
+    })
+
+
+
+

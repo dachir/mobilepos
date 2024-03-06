@@ -7,20 +7,20 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "mode_of_payment"
+  "unlimited_credit"
  ],
  "fields": [
   {
-   "fieldname": "mode_of_payment",
-   "fieldtype": "Table MultiSelect",
-   "label": "Mode of Payment",
-   "options": "Shop Mode Payment"
+   "default": "0",
+   "fieldname": "unlimited_credit",
+   "fieldtype": "Check",
+   "label": "Unlimited Credit"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-02-22 10:38:22.975415",
+ "modified": "2024-03-06 11:04:36.802058",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Settings",

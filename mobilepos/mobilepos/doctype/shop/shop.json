@@ -19,6 +19,7 @@
   "branch",
   "warehouse",
   "currency",
+  "currency_symbol",
   "mode_of_payment",
   "section_break_8ue0d",
   "shop_address",
@@ -51,7 +52,10 @@
   "invoice",
   "inventory",
   "complement_tab",
-  "currency_symbol",
+  "credit_limit",
+  "unlimited_credit",
+  "column_break_mlddx",
+  "peding_amount",
   "base_urls_section",
   "category_image_url",
   "brand_image_url",
@@ -344,12 +348,36 @@
    "fieldname": "serial_number",
    "fieldtype": "Data",
    "label": "Serial Number"
+  },
+  {
+   "default": "0",
+   "fieldname": "credit_limit",
+   "fieldtype": "Currency",
+   "label": "Credit Limit",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "unlimited_credit",
+   "fieldtype": "Check",
+   "label": "Unlimited Credit"
+  },
+  {
+   "fieldname": "column_break_mlddx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "peding_amount",
+   "fieldtype": "Currency",
+   "label": "Peding Amount",
+   "read_only": 1
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-28 18:16:29.655875",
+ "modified": "2024-03-06 11:03:19.595471",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
