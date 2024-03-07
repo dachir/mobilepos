@@ -860,7 +860,8 @@ def get_sku_wise_daily_report(limit=10, offset=0):
     for d in dates_list: # [start_limit: end_limit]:
         sum_doc = frappe.db.sql(
             """
-            SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, total_qty, grand_total, total_tax
+            SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, SUM(total_qty) AS total_qty, 
+                SUM(grand_total) AS grand_total, SUM(total_tax) AS total_tax, SUM(total_cash) AS total_cash, SUM(total_credit) AS total_credit
             FROM(
                 SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty, 
                     SUM(grand_total) AS grand_total, SUM(total_taxes_and_charges) AS total_tax,
