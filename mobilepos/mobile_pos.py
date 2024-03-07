@@ -907,12 +907,12 @@ def get_sku_wise_daily_report(limit=10, offset=0):
                 "branch": shop_doc.branch,
                 "total_qty": sum_doc[0].total_qty,
                 "date": d,
-                "total_tax": sum_doc[0].total_tax if sum_doc and sum_doc[0].total_tax else 0,
-                "grand_total": sum_doc[0].grand_total if sum_doc and sum_doc[0].grand_total else 0,
-                "total_cash": sum_doc[0].total_cash if sum_doc and sum_doc[0].total_cash else 0,
-                "total_credit": sum_doc[0].total_credit if sum_doc and sum_doc[0].total_credit else 0,
-                "paid_amount": sum_doc[0].paid_amount if sum_doc and sum_doc[0].paid_amount else 0,
-                "cash_value": (sum_doc[0].total_credit - sum_doc[0].paid_amount) if sum_doc and sum_doc[0].total_credit and sum_doc[0].paid_amount else 0,
+                "total_tax": sum_doc[0].total_tax if sum_doc and sum_doc[0].total_tax else 0.0,
+                "grand_total": sum_doc[0].grand_total if sum_doc and sum_doc[0].grand_total else 0.0,
+                "total_cash": sum_doc[0].total_cash if sum_doc and sum_doc[0].total_cash else 0.0,
+                "total_credit": sum_doc[0].total_credit if sum_doc and sum_doc[0].total_credit else 0.0,
+                "paid_amount": sum_doc[0].paid_amount if sum_doc and sum_doc[0].paid_amount else 0.0,
+                "cash_value": (sum_doc[0].total_credit - sum_doc[0].paid_amount) if sum_doc and sum_doc[0].total_credit and sum_doc[0].paid_amount else 0.0,
                 "details": details,
             }
             
