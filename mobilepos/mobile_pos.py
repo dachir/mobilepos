@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate, get_time
-from datetime import datetime
+from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
@@ -595,10 +595,10 @@ def create_invoice():
     shop_doc = frappe.get_doc("Shop", shop)
         
     if payment_type == "Credit":
-        if not shop_doc.unlimited_credit : 
-            total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
-            if flt(shop_doc.credit_limit) < total_pending :
-                frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        #if not shop_doc.unlimited_credit : 
+        #    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+        #    if flt(shop_doc.credit_limit) < total_pending :
+        #        frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
         outstanding_amt = get_customer_outstanding(
             customer, company, ignore_outstanding_sales_order=True
@@ -852,14 +852,12 @@ def get_sku_wise_daily_report(limit=10, offset=0):
     company_address = frappe.get_doc("Address", company_doc.name)
     
     sales_person = shop_doc.sales_person
-    condition = ""
-    parameters = {"shop": shop}
 
     data = []
 
-    end_limit = limit + offset if limit + offset < len(dates_list) else len(dates_list) 
-    start_limit = offset  if offset < end else end
-    for d in dates_list[start_limit: end_limit]:
+    #end_limit = limit + offset if limit + offset < len(dates_list) else len(dates_list) 
+    #start_limit = offset  if offset < end_limit else end_limit
+    for d in dates_list: # [start_limit: end_limit]:
         sum_doc = frappe.db.sql(
             """
             SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, total_qty, grand_total, total_tax
@@ -881,37 +879,44 @@ def get_sku_wise_daily_report(limit=10, offset=0):
             GROUP BY t.posting_date
             """, {"shop": shop, "date": d}, as_dict=1
         )
+
+        tax_text = "$.VAT 15% - AHW"
         
         details_doc = frappe.db.sql(
             """
             SELECT d.item_code, SUM(d.qty) AS qty, MAX(d.rate) AS rate, SUM(d.amount) AS amount, 
-                SUM(JSON_EXTRACT(d.item_tax_rate,'$.VAT 15% - AHW') / 100 * d.amount) AS tax_amount,
-                SUM((100 + JSON_EXTRACT(d.item_tax_rate,'$.VAT 15% - AHW')) / 100 * d.amount) AS total
+                SUM(SUBSTRING_INDEX(IFNULL(SUBSTRING(item_tax_rate, 2, LENGTH(item_tax_rate) - 2),0),':',-1) / 100 * d.amount) AS tax_amount,
+                SUM((100 + SUBSTRING_INDEX(IFNULL(SUBSTRING(item_tax_rate, 2, LENGTH(item_tax_rate) - 2),0),':',-1)) / 100 * d.amount) AS total
             FROM `tabSales Invoice Item` d 
             INNER JOIN `tabSales Invoice` i ON d.parent = i.name
-            WHERE i.shop = %(shop)s AND posting_date = %(date)s AND i.docstatus = 1
+            WHERE i.shop = %(shop)s AND i.posting_date = %(date)s AND i.docstatus = 1
             GROUP BY d.item_code
-            """, {"shop": shop, "date": d}, as_dict=1
+            """, {"shop": shop, "date": d, "tax": tax_text}, as_dict=1
         )
         
         details = []
-        details.extend(details_doc)
-        args = {
-            "shop": shop,
-            "address": company_address.pincode + ", " + company_address.address_line1,
-            "vat_no": company_address.vat_reg_no,
-            "branch": shop_doc.branch,
-            "total_qty": sum_doc[0].total_qty,
-            "date": d,
-            "grand_total": sum_doc[0].grand_total,
-            "total_cash": sum_doc[0].total_cash,
-            "total_credit": sum_doc[0].total_credit,
-            "paid_amount": sum_doc[0].paid_amount,
-            "cash_value": sum_doc[0].total_credit - sum_doc[0].paid_amount,
-            "details": details,
-        }
-        
-        data.append(args)
+        if details_doc:
+            details.extend(details_doc)
+            args = {
+                "shop": shop,
+                "company": shop_doc.company,
+                "salesman": shop_doc.sales_person,
+                "warehouse": shop_doc.warehouse,
+                "address": company_address.pincode + ", " + company_address.address_line1,
+                "vat_no": shop_doc.vat_reg_no,
+                "branch": shop_doc.branch,
+                "total_qty": sum_doc[0].total_qty,
+                "date": d,
+                "total_tax": sum_doc[0].total_tax if sum_doc and sum_doc[0].total_tax else 0,
+                "grand_total": sum_doc[0].grand_total if sum_doc and sum_doc[0].grand_total else 0,
+                "total_cash": sum_doc[0].total_cash if sum_doc and sum_doc[0].total_cash else 0,
+                "total_credit": sum_doc[0].total_credit if sum_doc and sum_doc[0].total_credit else 0,
+                "paid_amount": sum_doc[0].paid_amount if sum_doc and sum_doc[0].paid_amount else 0,
+                "cash_value": (sum_doc[0].total_credit - sum_doc[0].paid_amount) if sum_doc and sum_doc[0].total_credit and sum_doc[0].paid_amount else 0,
+                "details": details,
+            }
+            
+            data.append(args)
 
     return frappe._dict({
         "total": len(data),
