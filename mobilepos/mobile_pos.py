@@ -266,8 +266,29 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             credit_limit = get_credit_limit(i.name, company)
 
             bal = flt(credit_limit) - flt(outstanding_amt)
+
+            sql_data = frappe.db.sql(
+                """
+                SELECT SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, SUM(total_qty) AS total_qty, SUM(invoices_count) AS invoices_count
+                FROM(
+                    SELECT SUM(grand_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty, COUNT(name) as invoices_count
+                    FROM `tabSales Invoice`
+                    WHERE customer=%(customer)s AND docstatus = 1 AND YEAR(posting_date) = YEAR(CURDATE())
+                    UNION
+                    SELECT  0 as net_total, SUM(paid_amount) as paid_amount, 0 AS total_qty, 0 as invoices_count
+                    FROM `tabPayment Entry`
+                    WHERE party=%(customer)s AND docstatus =1 AND YEAR(posting_date) = YEAR(CURDATE())
+                ) AS t
+                """,{"customer": d.name}, as_dict=1
+            )
+
+
             i.update({
-                "balance": bal
+                "balance": bal,
+                "total_invoice": sql_data[0].net_total,
+                "cash_collected": sql_data[0].paid_amount,
+                "total_qty": sql_data[0].total_qty,
+                "invoices_count": sql_data[0].invoices_count,
             })
         #if name:
             # Filter data where the name starts with name
@@ -359,7 +380,7 @@ def get_daily_report(limit=10, offset=0):
         """
         SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, total_qty
         FROM(
-            SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty
+            SELECT posting_date, SUM(grand_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty
             FROM `tabSales Invoice`
             WHERE shop=%(shop)s AND docstatus <> 2 {condition} {si_condition}
             GROUP BY posting_date
