@@ -279,7 +279,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                     FROM `tabPayment Entry`
                     WHERE party=%(customer)s AND docstatus =1 AND YEAR(posting_date) = YEAR(CURDATE())
                 ) AS t
-                """,{"customer": d.name}, as_dict=1
+                """,{"customer": i.name}, as_dict=1
             )
 
 
