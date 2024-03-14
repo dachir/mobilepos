@@ -400,20 +400,21 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "administrator",
-   "fieldtype": "Data",
-   "label": "Administrator"
-  },
-  {
    "fieldname": "module_section",
    "fieldtype": "Section Break",
-   "label": "Module"
+   "label": "Modules"
+  },
+  {
+   "default": "0",
+   "fieldname": "administrator",
+   "fieldtype": "Check",
+   "label": "Administrator"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-14 09:02:39.753133",
+ "modified": "2024-03-14 09:56:30.499212",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
