@@ -949,7 +949,7 @@ def get_sku_wise_daily_report(limit=10, offset=0):
     })
 
 @frappe.whitelist()
-def get_visits(limit=10, offset=0, shop, start, end):
+def get_visits(shop, start, end, limit=10, offset=0):
 
     data = frappe.db.sql(
         """
