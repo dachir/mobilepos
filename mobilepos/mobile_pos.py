@@ -948,6 +948,49 @@ def get_sku_wise_daily_report(limit=10, offset=0):
         "sku_daily_report": data,
     })
 
+@frappe.whitelist()
+def get_visits(limit=10, offset=0, shop, start, end):
+
+    data = frappe.db.sql(
+        """
+        SELECT *
+        FROM `tabShop Visit`
+        WHERE shop= %(shop)s AND end BETWEEN %(start)s AND %(end)s
+        LIMIT %(limit)s OFFSET %(offset)s
+        """, {"shop": shop, "start": start, "end": end, "limit": limit, "offset":offset}, as_dict=1
+    )
+
+    for d in data:        
+        transactions = []
+        transactions_doc = frappe.db.sql(
+            """
+            SELECT name,creation as `date`, SUM(grand_total) as value, 'Invoice' AS `type`
+            FROM `tabSales Invoice`
+            WHERE shop=%(shop)s AND docstatus = 1 AND CONVERT(creation, date) = CONVERT( %(date)s, date)
+            GROUP BY name,creation
+            UNION
+            SELECT name,creation, SUM(paid_amount) as value, 'Payment' AS `type`
+            FROM `tabPayment Entry`
+            WHERE shop=%(shop)s AND docstatus = 1 AND CONVERT(creation, date) = CONVERT( %(date)s, date)
+            GROUP BY name,creation
+            """, { "shop": shop, "date": d.end }, as_dict=1
+        )
+        
+        details = []
+        if transactions_doc:
+            transactions.extend(transactions_doc)
+            d.update({"transactions": transactions})
+
+    return frappe._dict({
+        "total": len(data),
+        "limit": limit,
+        "offset": offset,
+        "sku_daily_report": data,
+    })
+
+
+
+
 
 
 
