@@ -41,6 +41,12 @@
   "last_name",
   "address_name",
   "roles_section",
+  "pos_user",
+  "column_break_k7wj2",
+  "manager",
+  "column_break_e3gku",
+  "administrator",
+  "module_section",
   "order",
   "return",
   "dashboard",
@@ -372,12 +378,42 @@
    "fieldtype": "Currency",
    "label": "Peding Amount",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "pos_user",
+   "fieldtype": "Check",
+   "label": "User"
+  },
+  {
+   "fieldname": "column_break_k7wj2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "manager",
+   "fieldtype": "Check",
+   "label": "Manager"
+  },
+  {
+   "fieldname": "column_break_e3gku",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "administrator",
+   "fieldtype": "Data",
+   "label": "Administrator"
+  },
+  {
+   "fieldname": "module_section",
+   "fieldtype": "Section Break",
+   "label": "Module"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-06 11:03:19.595471",
+ "modified": "2024-03-14 09:02:39.753133",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
