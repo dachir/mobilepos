@@ -985,7 +985,7 @@ def get_visits(shop, start, end, limit=10, offset=0):
         "total": len(data),
         "limit": limit,
         "offset": offset,
-        "sku_daily_report": data,
+        "visits": data,
     })
 
 
