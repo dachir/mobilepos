@@ -285,6 +285,8 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
 
             i.update({
                 "balance": bal,
+                "outstanding": outstanding_amt,
+                "credit_limit": credit_limit,
                 "total_invoice": sql_data[0].net_total,
                 "cash_collected": sql_data[0].paid_amount,
                 "total_qty": sql_data[0].total_qty,
