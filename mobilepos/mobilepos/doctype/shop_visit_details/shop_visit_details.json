@@ -8,7 +8,8 @@
  "field_order": [
   "document_type",
   "document_name",
-  "posting_date"
+  "posting_date",
+  "amount"
  ],
  "fields": [
   {
@@ -27,12 +28,17 @@
    "fieldname": "posting_date",
    "fieldtype": "Datetime",
    "label": "Posting Date"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-03-19 16:59:05.132160",
+ "modified": "2024-03-20 10:44:44.310947",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Visit Details",

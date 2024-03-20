@@ -592,6 +592,7 @@ def create_invoice():
     sales_person = ""
     payment_type = ""
     total_amount = 0.0
+    visit_name = None
     
     if request_dict.get('invoice_name'):
         name = request_dict.get('invoice_name').strip()
@@ -615,6 +616,8 @@ def create_invoice():
         payment_type = request_dict.get('payment_type')
     if request_dict.get('total_amount'):
         total_amount = request_dict.get('total_amount')
+    if request_dict.get('visit'):
+        visit_name = request_dict.get('visit')
 
     shop_doc = frappe.get_doc("Shop", shop)
         
@@ -704,6 +707,17 @@ def create_invoice():
             #add submit
             sale.submit()
 
+            if visit_name:
+                visit = frappe.get_doc("Shop Visit", visit_name)
+                visit.append('details',{
+                        "document_type": "Sales Invoice",
+                        "document_name": sale.name,
+                        "posting_date": sale.creation,
+                        "amount": sale.grand_total,
+                    }
+                )
+                visit.save()
+
             #Gestion du paiment
             if payment_type == "Cash":
                 create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
@@ -750,6 +764,9 @@ def create_payment_entry():
     shop = request_dict.get("shop").strip()
     reference_no = request_dict.get("reference_no").strip()
     received_amount = request_dict.get('paid_amount')
+    visit_name = None
+    if request_dict.get('visit'):
+        visit_name = request_dict.get('visit')
 
     data = frappe.db.sql(
         """
@@ -779,6 +796,18 @@ def create_payment_entry():
         payment = frappe.get_doc(request_dict)
         payment.insert()
         payment.submit()
+
+        if visit_name:
+            visit = frappe.get_doc("Shop Visit", visit_name)
+            visit.append('details',{
+                    "document_type": "Sales Invoice",
+                    "document_name": payment.name,
+                    "posting_date": payment.creation,
+                    "amount": received_amount,
+                }
+            )
+            visit.save()
+
     except frappe.DoesNotExistError:
         return None
     except Exception as e:

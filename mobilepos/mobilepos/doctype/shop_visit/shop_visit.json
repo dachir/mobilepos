@@ -61,12 +61,13 @@
    "fieldname": "details",
    "fieldtype": "Table",
    "label": "Details",
-   "options": "Shop Visit Details"
+   "options": "Shop Visit Details",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-19 17:00:16.803458",
+ "modified": "2024-03-20 11:39:18.672815",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Visit",
