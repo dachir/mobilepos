@@ -803,7 +803,7 @@ def create_payment_entry():
         if visit_name:
             visit = frappe.get_doc("Shop Visit", visit_name)
             visit.append('details',{
-                    "document_type": "Sales Invoice",
+                    "document_type": "Payment Entry",
                     "document_name": payment.name,
                     "posting_date": payment.creation,
                     "amount": received_amount,
@@ -870,7 +870,7 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
     if visit_name:
         visit = frappe.get_doc("Shop Visit", visit_name)
         visit.append('details',{
-                "document_type": "Sales Invoice",
+                "document_type": "Payment Entry",
                 "document_name": pay_doc.name,
                 "posting_date": pay_doc.creation,
                 "amount": grand_total,
