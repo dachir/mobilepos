@@ -14,7 +14,8 @@
   "begin",
   "end",
   "longitude",
-  "latitude"
+  "latitude",
+  "details"
  ],
  "fields": [
   {
@@ -55,11 +56,17 @@
    "fieldtype": "Data",
    "label": "Customer Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Details",
+   "options": "Shop Visit Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-14 12:58:07.018508",
+ "modified": "2024-03-19 17:00:16.803458",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Visit",
