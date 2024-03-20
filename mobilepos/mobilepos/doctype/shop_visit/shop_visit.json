@@ -15,7 +15,8 @@
   "end",
   "longitude",
   "latitude",
-  "details"
+  "details",
+  "amended_from"
  ],
  "fields": [
   {
@@ -63,11 +64,21 @@
    "label": "Details",
    "options": "Shop Visit Details",
    "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Shop Visit",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-03-20 11:39:18.672815",
+ "modified": "2024-03-20 12:14:06.955265",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Visit",

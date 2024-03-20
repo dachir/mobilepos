@@ -720,7 +720,10 @@ def create_invoice():
 
             #Gestion du paiment
             if payment_type == "Cash":
-                create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
+                if visit_name:
+                    create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
+                else:
+                    create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
                 
     except frappe.DoesNotExistError:
             return None
@@ -816,7 +819,7 @@ def create_payment_entry():
         
     return str(payment.name)
 
-def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total):
+def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total, visit_name = None):
     pos_doc = frappe.get_doc("Shop", shop)
     #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
     cash_mode_list = frappe.db.sql(
@@ -863,6 +866,17 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
 
     pay_doc = frappe.get_doc(args)
     pay_doc.submit()
+
+    if visit_name:
+        visit = frappe.get_doc("Shop Visit", visit_name)
+        visit.append('details',{
+                "document_type": "Sales Invoice",
+                "document_name": pay_doc.name,
+                "posting_date": pay_doc.creation,
+                "amount": grand_total,
+            }
+        )
+        visit.save()
     
 
 def get_dates_between(start_date, end_date):
