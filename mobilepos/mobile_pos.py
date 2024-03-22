@@ -966,8 +966,9 @@ def get_sku_wise_daily_report(limit=10, offset=0):
         )
         
         details = []
-        if details_doc:
-            details.extend(details_doc)
+        if sum_doc:
+            if details_doc:
+                details.extend(details_doc)
             args = {
                 "shop": shop,
                 "company": shop_doc.company,
