@@ -67,7 +67,7 @@ def incomeComparision(shop):
         """
         SELECT  `year`, `month`, IFNULL(net_total, 0) as net_total
         FROM(
-            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(net_total) as net_total
+            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(grand_total) as net_total
             FROM `tabSales Invoice`
             WHERE shop = %s AND YEAR(posting_date) = YEAR(CURDATE())
             GROUP BY YEAR(posting_date), MONTH(posting_date)
@@ -78,7 +78,7 @@ def incomeComparision(shop):
         """
         SELECT  `year`, `month`, IFNULL(net_total, 0) as net_total
         FROM(
-            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(net_total) as net_total
+            SELECT YEAR(posting_date) as 'year', MONTH(posting_date) as 'month', SUM(grand_total) as net_total
             FROM `tabSales Invoice`
             WHERE shop = %s AND (YEAR(posting_date) = YEAR(CURDATE()) -  1)
             GROUP BY YEAR(posting_date), MONTH(posting_date)
@@ -129,7 +129,7 @@ def incomeSummary(shop,cond):
         SELECT (SELECT SUM(total_qty) as total_qty
         FROM `tabSales Invoice`
         WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND docstatus = 1 {condition}) as total_qty,
-        (SELECT SUM(net_total) as net_total
+        (SELECT SUM(grand_total) as net_total
         FROM `tabSales Invoice`
         WHERE shop=%(shop)s AND YEAR(posting_date) = YEAR(CURDATE()) AND docstatus = 1 {condition}) as net_total,
         (SELECT SUM(paid_amount) as paid_amount
@@ -928,18 +928,21 @@ def get_sku_wise_daily_report(limit=10, offset=0):
         sum_doc = frappe.db.sql(
             """
             SELECT t.posting_date, SUM(t.net_total) AS net_total, SUM(t.paid_amount) AS paid_amount, SUM(total_qty) AS total_qty, 
-                SUM(grand_total) AS grand_total, SUM(total_tax) AS total_tax, SUM(total_cash) AS total_cash, SUM(total_credit) AS total_credit
+                SUM(grand_total) AS grand_total, SUM(total_tax) AS total_tax, SUM(total_cash) AS total_cash, SUM(total_credit) AS total_credit,
+                SUM(cash_count) AS cash_count, SUM(credit_count) AS credit_count
             FROM(
                 SELECT posting_date, SUM(net_total) as net_total, 0 as paid_amount, SUM(total_qty) AS total_qty, 
                     SUM(grand_total) AS grand_total, SUM(total_taxes_and_charges) AS total_tax,
                     SUM(CASE WHEN payment_type = 'Cash' THEN grand_total ELSE 0 END) AS total_cash,
-                    SUM(CASE WHEN payment_type <> 'Cash' THEN grand_total ELSE 0 END) AS total_credit
+                    SUM(CASE WHEN payment_type <> 'Cash' THEN grand_total ELSE 0 END) AS total_credit,
+                    SUM(CASE WHEN payment_type = 'Cash' THEN 1 ELSE 0 END) AS cash_count,
+                    SUM(CASE WHEN payment_type <> 'Cash' THEN 1 ELSE 0 END) AS credit_count
                 FROM `tabSales Invoice`
                 WHERE shop=%(shop)s AND docstatus = 1 AND posting_date = %(date)s
                 GROUP BY posting_date
                 UNION
                 SELECT DISTINCT posting_date, 0 as net_total, SUM(paid_amount) as paid_amount, 0 AS total_qty, 
-                    0 AS grand_total, 0 AS total_tax, 0 AS total_cash, 0 AS total_credit
+                    0 AS grand_total, 0 AS total_tax, 0 AS total_cash, 0 AS total_credit, 0 AS cash_count, 0 AS credit_count
                 FROM `tabPayment Entry`
                 WHERE shop=%(shop)s AND docstatus = 1  AND posting_date = %(date)s
                 GROUP BY posting_date
