@@ -331,7 +331,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
     elif doctype in ["Shop Invoice"]:
         data = frappe.db.sql(
             """
-            SELECT i.name as invoice_number, i.posting_date as date, i.grand_total, i.paid_amount, i.outstanding_amount, i.customer
+            SELECT i.name as invoice_number, i.posting_date as date, i.grand_total as net_total, i.paid_amount, i.outstanding_amount, i.customer
             FROM `tabSales Invoice` i INNER JOIN `tabShop` s ON i.sales_reconciliation = s.sales_person
             WHERE i.outstanding_amount > 0 AND s.name= %(shop)s AND i.customer = %(name)s AND i.docstatus = 1 and i.status <> 'Credit Note Issued'
             """,{"shop":shop,"name":name}, as_dict=1
