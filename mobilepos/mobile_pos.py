@@ -5,6 +5,7 @@ from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
+from frappe.model.meta import get_meta
 
 import json
 
@@ -623,10 +624,19 @@ def create_invoice():
     shop_doc = frappe.get_doc("Shop", shop)
         
     if payment_type == "Credit":
-        #if not shop_doc.unlimited_credit : 
-        #    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
-        #    if flt(shop_doc.credit_limit) < total_pending :
-        #        frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        meta = get_meta("Customer")
+        if meta.get_field("custom_customer_account_type"):
+            custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
+            if custom_customer_account_type != "CONTRACT CUSTOMER":
+                if not shop_doc.unlimited_credit : 
+                    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                    if flt(shop_doc.credit_limit) < total_pending :
+                        frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        else:
+            if not shop_doc.unlimited_credit : 
+                total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                if flt(shop_doc.credit_limit) < total_pending :
+                    frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
         outstanding_amt = get_customer_outstanding(
             customer, company, ignore_outstanding_sales_order=True
