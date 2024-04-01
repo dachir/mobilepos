@@ -629,12 +629,12 @@ def create_invoice():
             custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
             if custom_customer_account_type != "CONTRACT CUSTOMER":
                 if not shop_doc.unlimited_credit : 
-                    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                    #total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
                     if flt(shop_doc.credit_limit) < total_pending :
                         frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         else:
             if not shop_doc.unlimited_credit : 
-                total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                #total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
                 if flt(shop_doc.credit_limit) < total_pending :
                     frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
@@ -717,6 +717,10 @@ def create_invoice():
                 sale.save()
             #add submit
             sale.submit()
+
+            total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+            shop_doc.peding_amount = total_pending
+            shop_doc.save()
 
             if visit_name:
                 visit = frappe.get_doc("Shop Visit", visit_name)
@@ -811,6 +815,10 @@ def create_payment_entry():
         payment.insert()
         payment.submit()
 
+        total_pending = flt(shop_doc.peding_amount) - flt(received_amount)
+        shop_doc.peding_amount = total_pending
+        shop_doc.save()
+
         if visit_name:
             visit = frappe.get_doc("Shop Visit", visit_name)
             visit.append('details',{
@@ -888,6 +896,10 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
             }
         )
         visit.save()
+
+        total_pending = flt(shop_doc.peding_amount) - flt(grand_total)
+        shop_doc.peding_amount = total_pending
+        shop_doc.save()
     
 
 def get_dates_between(start_date, end_date):
