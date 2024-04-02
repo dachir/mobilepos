@@ -629,12 +629,12 @@ def create_invoice():
             custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
             if custom_customer_account_type != "CONTRACT CUSTOMER":
                 if not shop_doc.unlimited_credit : 
-                    #total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
                     if flt(shop_doc.credit_limit) < total_pending :
                         frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         else:
             if not shop_doc.unlimited_credit : 
-                #total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
                 if flt(shop_doc.credit_limit) < total_pending :
                     frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
@@ -786,6 +786,8 @@ def create_payment_entry():
     if request_dict.get('visit'):
         visit_name = request_dict.get('visit')
 
+    shop_doc = frappe.get_doc("Shop", shop)
+
     data = frappe.db.sql(
         """
         SELECT m.default_account,a.account_currency
@@ -841,6 +843,7 @@ def create_payment_entry():
 def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total, visit_name = None):
     pos_doc = frappe.get_doc("Shop", shop)
     #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
+    shop_doc = frappe.get_doc("Shop", shop)
     cash_mode_list = frappe.db.sql(
         """
         SELECT mode_of_payment
