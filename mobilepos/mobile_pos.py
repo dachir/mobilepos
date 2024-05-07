@@ -47,6 +47,14 @@ def get_promotion(warehouse, item, customer_group, qty):
 @frappe.whitelist()
 def configuration(user):
     data = frappe.get_doc("Shop", {"user":user})
+    nfc = frappe.db.sql(
+        """
+        SELECT IFNULL(EXP(SUM(LOG(c.nfc_only))), 0) AS nfc_only
+        FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
+        WHERE s.name = %s
+        """(data.name), as_dict = 1
+    )
+    data.update({"nfc_only":nfc[0].nfc_only})
     return frappe._dict({
         "business_info": data,
         "currency_symbol": data.currency_symbol,
@@ -213,7 +221,7 @@ def get_invoices(name):
 
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
-def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None, company=None):
+def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None, company=None, nfc_only=1):
     if not doctype in ["Shop Invoice"]:
         data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
         data_list =  frappe._dict({
@@ -251,14 +259,14 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             t1.customer_name as description, 
             t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
             t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
-            t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id
+            t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
             FROM (
                 SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
                 FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
-                WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%')
+                WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%') AND c.nfc_only= %(nfc_only)s
             ) AS t1
             LIMIT %(limit)s OFFSET %(offset)s
-            """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
+            """,{"shop":shop, "name":name, "nfc_only": nfc_only, "limit":int(limit),"offset":int(offset)}, as_dict=1
         )
 
         for i in data:
@@ -716,7 +724,9 @@ def create_invoice():
                 args.update({"name": name})
                 sale.save()
             #add submit
-            sale.submit()
+            signature = frappe.db.get_value("Customer", customer,"signature")
+            if signature == 0:
+                sale.submit()
 
             total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
             shop_doc.peding_amount = total_pending
@@ -815,7 +825,10 @@ def create_payment_entry():
     try:
         payment = frappe.get_doc(request_dict)
         payment.insert()
-        payment.submit()
+
+        signature = frappe.db.get_value("Customer", customer,"signature")
+        if signature == 0
+            payment.submit()
 
         total_pending = flt(shop_doc.peding_amount) - flt(received_amount)
         shop_doc.peding_amount = total_pending
@@ -886,8 +899,11 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
         "branch": branch
     }
 
+    signature = frappe.db.get_value("Customer", customer,"signature")
     pay_doc = frappe.get_doc(args)
-    pay_doc.submit()
+    pay_doc.insert()
+    if signature == 0:
+        pay_doc.submit()
 
     if visit_name:
         visit = frappe.get_doc("Shop Visit", visit_name)
@@ -1064,6 +1080,7 @@ def get_visits(shop, start, end, limit=10, offset=0):
         "offset": offset,
         "visits": data,
     })
+
 
 
 
