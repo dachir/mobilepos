@@ -49,9 +49,9 @@ def configuration(user):
     data = frappe.get_doc("Shop", {"user":user})
     nfc = frappe.db.sql(
         """
-        SELECT IFNULL(EXP(SUM(LOG(c.nfc_only))), 0) AS nfc_only
+        SELECT CASE WHEN COUNT(c.nfc_only) > 0 THEN 0 ELSE 1 END AS nfc_only
         FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
-        WHERE s.name = %s
+        WHERE c.nfc_only = 0 AND s.name = %s
         """,
         (data.name,),
         as_dict=1
