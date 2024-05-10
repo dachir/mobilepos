@@ -56,9 +56,10 @@ def configuration(user):
         (data.name,),
         as_dict=1
     )
-    data.update({"nfc_only":nfc[0].nfc_only})
+    #data.update({"nfc_only":nfc[0].nfc_only})
     return frappe._dict({
         "business_info": data,
+        "nfc_only":nfc[0].nfc_only}
         "currency_symbol": data.currency_symbol,
         "base_urls": {
             "category_image_url": data.category_image_url,
