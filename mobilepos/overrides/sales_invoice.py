@@ -3,7 +3,7 @@ from mobilepos.mobile_pos import create_pos_cash_invoice_payment
 
 class CustomSalesInvoice(SalesInvoice):
     def on_submit(self):
-        frappe.msgprint("shop: " + self.shop + " company:" + self.company + " customer:" + self.customer + " name:" + self.name + " grand_total:" + str(self.grand_total) + " payment_type:" self.payment_type)
+        frappe.msgprint("shop: ")
         if self.shop:
             if self.payment_type == "Cash":
                     visit =  frappe.db.sql(
