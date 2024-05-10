@@ -255,7 +255,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             })
 
     elif doctype in ["Shop Customer"]:
-        if nfc_only != 99:
+        if int(nfc_only) != 99:
             data = frappe.db.sql(
                 """
                 SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
