@@ -95,7 +95,7 @@ app_license = "MIT"
 # Override standard doctype classes
 
 override_doctype_class = {
-    "SalesInvoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice"
+    "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice"
 }
 
 # Document Events
