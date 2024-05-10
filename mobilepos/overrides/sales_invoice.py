@@ -1,3 +1,4 @@
+import frappe
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from mobilepos.mobile_pos import create_pos_cash_invoice_payment
 
