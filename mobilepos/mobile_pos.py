@@ -52,7 +52,9 @@ def configuration(user):
         SELECT IFNULL(EXP(SUM(LOG(c.nfc_only))), 0) AS nfc_only
         FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
         WHERE s.name = %s
-        """(data.name), as_dict = 1
+        """,
+        (data.name,),
+        as_dict=1
     )
     data.update({"nfc_only":nfc[0].nfc_only})
     return frappe._dict({
