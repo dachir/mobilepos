@@ -13,5 +13,6 @@ class CustomSalesInvoice(SalesInvoice):
                         """, (self.name), as_dict = 1
                     )
                     if visit:
+                        frappe.msgprint("shop: " + self.shop + " company:" + self.company + " customer:" + self.customer + " name:" + self.name + " grand_total:" + str(self.grand_total) + " visit:" visit[0].name)
                         create_pos_cash_invoice_payment(self.shop, self.company, self.customer, self.name, self.branch, self.grand_total, visit[0].name)
                         
