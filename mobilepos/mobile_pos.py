@@ -747,11 +747,12 @@ def create_invoice():
                 visit.save()
 
             #Gestion du paiment
-            if payment_type == "Cash":
-                if visit_name:
-                    create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
-                else:
-                    create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
+            if signature == 0:
+                if payment_type == "Cash":
+                    if visit_name:
+                        create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
+                    else:
+                        create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
                 
     except frappe.DoesNotExistError:
             return None
