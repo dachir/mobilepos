@@ -846,11 +846,11 @@ def create_payment_entry():
 
     try:
         payment = frappe.get_doc(request_dict)
-        payment.insert()
+        payment.submit()
 
-        signature = frappe.db.get_value("Customer", customer,"signature")
-        if signature == 0:
-            payment.submit()
+        #signature = frappe.db.get_value("Customer", customer,"signature")
+        #if signature == 0:
+        #    payment.submit()
 
         total_pending = flt(shop_doc.peding_amount) - flt(received_amount)
         shop_doc.peding_amount = total_pending
