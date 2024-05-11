@@ -3,7 +3,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from mobilepos.mobile_pos import create_pos_cash_invoice_payment
 
 class CustomSalesInvoice(SalesInvoice):
-    def on_submit(self):
+    def after_submit(self):
         frappe.msgprint("shop: " + self.shop)
         frappe.msgprint(" company:" + self.company)
         frappe.msgprint(" customer:" + self.customer)
