@@ -94,21 +94,22 @@ app_license = "MIT"
 # ---------------
 # Override standard doctype classes
 
-override_doctype_class = {
-    "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice"
-}
+#override_doctype_class = {
+#    "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice"
+#}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-#	"*": {
+doc_events = {
+	"Sales Invoice": {
+        "after_submit": "mobilepos.overrides.sales_invoice.CustomSalesInvoice",
 #		"on_update": "method",
 #		"on_cancel": "method",
 #		"on_trash": "method"
-#	}
-# }
+	}
+}
 
 # Scheduled Tasks
 # ---------------
