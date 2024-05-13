@@ -1,6 +1,7 @@
 import frappe
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from mobilepos.mobile_pos import create_pos_cash_invoice_payment, process_cart_data
+from zatca2024.zatca2024.zatcasdkcode import zatca_Background_on_submit
 
 class CustomSalesInvoice(SalesInvoice):
     def on_submit(self):
@@ -18,10 +19,10 @@ class CustomSalesInvoice(SalesInvoice):
             for i in invoice_details :
                 self.append('items', i)
 
-
-
+        zatca_Background_on_submit(doc)
 
     def after_submit(self):
+        frappe.throw("test")
         if self.shop:
             if self.payment_type == "Cash":
                     visit =  frappe.db.sql(
@@ -33,4 +34,8 @@ class CustomSalesInvoice(SalesInvoice):
                     )
                     if visit:
                         create_pos_cash_invoice_payment(self.shop, self.company, self.customer, self.name, self.branch, self.grand_total, visit[0].name)
+
+
+def test():
+    frappe.throw("test")
                         
