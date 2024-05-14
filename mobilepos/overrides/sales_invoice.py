@@ -6,4 +6,4 @@ from zatca2024.zatca2024.zatcasdkcode import zatca_Background_on_submit
 class CustomSalesInvoice(SalesInvoice):
     @frappe.whitelist()
     def recalculate_batch(self):
-        process_cart_data(self)
+        return process_cart_data(self)

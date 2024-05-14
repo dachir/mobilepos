@@ -651,6 +651,7 @@ def process_cart_data(doc):
         new_item.update({
             "item_code": detail.get("item_code"),
             "qty": detail.get("qty"),
+            "batch_no": detail.get("batch_no"),
             # Add more fields as needed
         })
         doc.append("items", new_item)
