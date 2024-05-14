@@ -643,6 +643,10 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
                     details, temp_batches = dispatch_by_batch(temp_batches, [], branch, promo["free_item"], promo["total_free_qty"], True)
                     invoice_details.extend(details)
 
+    invoice = frappe.get_doc("Sales Invoice", invoice_name)
+    invoice.items.clear()
+    ivoice.items.extend(invoice_details)
+
     return invoice_details
 
 
