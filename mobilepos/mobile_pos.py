@@ -597,12 +597,12 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     return invoice_details, filtered_batches
 
 @frappe.whitelist()
-def process_cart_data(cart_data, warehouse, branch, customer):
+def process_cart_data(invoice_name, warehouse, branch, customer):
     """
     Process cart data to generate invoice details and temp batches.
 
     Args:
-    - cart_data (list): List of items in the cart.
+    - invoice_name (str): Invoice name.
     - warehouse (str): Warehouse code.
     - branch (str): Branch code.
     - customer (str): Customer name.
@@ -614,18 +614,26 @@ def process_cart_data(cart_data, warehouse, branch, customer):
     invoice_details = []
     temp_batches = []
 
+    items = frappe.db.sql(
+        """
+        SELECT item_code AS product_code, SUM(qty) AS quantity
+        FROM `tabSales Invoice Item`
+        WHERE parent = %s
+        """, (invoice_name), as_dict=1
+    )
+
     #frappe.throw(str(cart_data))
 
-    for item in cart_data:
-        if int(item.quantity) == 0:
+    for item in items:
+        if int(item["quantity"]) == 0:
             continue
         
-        max_qty = int(item.quantity)
+        max_qty = int(item["quantity"])
 
         customer_group = frappe.db.get_value("Customer", customer, "customer_group")
-        promo_data = get_promotion(warehouse, item.product_code, customer_group, max_qty)
+        promo_data = get_promotion(warehouse, item["product_code"], customer_group, max_qty)
 
-        details, temp_batches = get_item_batches(warehouse, item.product_code, promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(warehouse, item["product_code"], promo_data, branch, max_qty)        
         invoice_details.extend(details)
 
         if promo_data:
