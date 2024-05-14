@@ -672,17 +672,16 @@ def process_cart_data(doc):
     for detail in invoice_details:
         #new_item = frappe.new_doc(detail)
         o = get_item_data(item_list, detail.get("item_code"), detail.get("qty"))
-        item_list = o.item_list
+        item_list = o.get("item_list")
         new_item = frappe.new_doc("Sales Invoice Item")
         new_item.update({
             "item_code": detail.get("item_code"),
             "qty": detail.get("qty"),
             "batch_no": detail.get("batch_no"),
-            "rate": o.rate,
-            "item_name": o.item_name,
-            "description": o.description,
-            "uom": o.uom,
-            "rate": o.rate,
+            "rate": o.get("rate"),
+            "item_name": o.get("item_name"),
+            "description": o.get("description"),
+            "uom": o.get("uom"),
         })
         doc.append("items", new_item)
 
