@@ -36,6 +36,7 @@ class CustomSalesInvoice(SalesInvoice):
                         create_pos_cash_invoice_payment(self.shop, self.company, self.customer, self.name, self.branch, self.grand_total, visit[0].name)
 
 
-def test():
-    frappe.throw("test")
+    @frappe.whitelist()
+    def recalculate_batch(self):
+        frappe.throw("test " + self.name)
                         
