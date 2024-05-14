@@ -597,7 +597,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     return invoice_details, filtered_batches
 
 
-def get_item_date(item_list, item_code, qty):
+def get_item_data(item_list, item_code, qty):
     for item in item_list:
         if item["item_code"] == item_code and item["qty"] > 0:
             reduced_qty = min(qty, item["qty"])
@@ -608,6 +608,7 @@ def get_item_date(item_list, item_code, qty):
             # If quantity becomes zero, remove the item from item_list
             if item["qty"] == 0:
                 item_list.remove(item)
+            
 
     return {
         "item_list": item_list, 
