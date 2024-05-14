@@ -684,7 +684,7 @@ def process_cart_data(doc):
             "description": o.get("description"),
             "uom": o.get("uom"),
             "income_account": o.get("income_account"),
-            "branc": doc.branch
+            "branch": doc.branch
         })
         doc.append("items", new_item)
 
