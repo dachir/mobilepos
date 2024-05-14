@@ -8,7 +8,7 @@ class CustomSalesInvoice(SalesInvoice):
         if self.shop:
             items = frappe.db.sql(
                 """
-                SELECT item_code AS product_code, SUM(qty) AS quantite
+                SELECT item_code AS product_code, SUM(qty) AS quantity
                 FROM `tabSales Invoice Item`
                 WHERE parent = %s
                 """, (self.name), as_dict=1
