@@ -596,6 +596,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     
     return invoice_details, filtered_batches
 
+@frappe.whitelist()
 def process_cart_data(cart_data, warehouse, branch, customer):
     """
     Process cart data to generate invoice details and temp batches.
