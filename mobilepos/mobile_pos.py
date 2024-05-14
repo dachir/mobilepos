@@ -645,7 +645,7 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
 
     invoice = frappe.get_doc("Sales Invoice", invoice_name)
     invoice.items.clear()
-    ivoice.items.extend(invoice_details)
+    invoice.items.extend(invoice_details)
 
     return invoice_details
 
