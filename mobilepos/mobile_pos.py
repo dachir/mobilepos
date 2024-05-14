@@ -615,10 +615,10 @@ def process_cart_data(cart_data, warehouse, branch, customer):
     temp_batches = []
 
     for item in cart_data:
-        if item["quantity"] == 0:
+        if int(item["quantity"]) == 0:
             continue
         
-        max_qty = item["quantity"]
+        max_qty = int(item["quantity"])
 
         customer_group = frappe.db.get_value("Customer", customer, "customer_group")
         promo_data = get_promotion(warehouse, item["product_code"], customer_group, max_qty)
