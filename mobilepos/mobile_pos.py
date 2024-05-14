@@ -599,11 +599,12 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
 
 def get_item_data(item_list, item_code, qty):
     for item in item_list:
-        if item["item_code"] == item_code and item["qty"] > 0:
+        if item["item_code"] == item_code and item["qty"] > 0 and qty > 0:
             reduced_qty = min(qty, item["qty"])
 
             # Update quantity in item_list
             item["qty"] -= reduced_qty
+            qty -= reduced_qty
 
             # If quantity becomes zero, remove the item from item_list
             if item["qty"] == 0:
