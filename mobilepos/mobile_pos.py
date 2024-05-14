@@ -614,6 +614,8 @@ def process_cart_data(cart_data, warehouse, branch, customer):
     invoice_details = []
     temp_batches = []
 
+    frappe.throw(str(cart_data))
+
     for item in cart_data:
         if int(item["quantity"]) == 0:
             continue
