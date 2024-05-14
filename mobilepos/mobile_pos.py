@@ -596,6 +596,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     
     return invoice_details, filtered_batches
 
+
 @frappe.whitelist()
 def process_cart_data(invoice_name, warehouse, branch, customer):
     """
@@ -646,6 +647,7 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
     invoice = frappe.get_doc("Sales Invoice", invoice_name)
     invoice.items.clear()
     invoice.items.extend(invoice_details)
+    invoice.save()
 
     return invoice_details
 
