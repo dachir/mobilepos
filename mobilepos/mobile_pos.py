@@ -624,15 +624,11 @@ def process_cart_data(doc):
     #    """, (doc.get('name')), as_dict=1
     #)
 
-    args = frappe._dict(doc)
-
-    frappe.throw(str(args.get('items')))
-
-    for item in doc.get('items'):
-        if item.get('qty') == 0:
+    for item in doc.items:
+        if item.qty == 0:
             continue
         
-        max_qty = int(item.get('qty'))
+        max_qty = int(item.qty)
 
         customer_group = frappe.db.get_value("Customer", doc.get('customer'), "customer_group")
         promo_data = get_promotion(doc.get('set_warehouse'), item.get('item_code'), customer_group, max_qty)
