@@ -633,13 +633,13 @@ def process_cart_data(doc):
         customer_group = frappe.db.get_value("Customer", doc.get('customer'), "customer_group")
         promo_data = get_promotion(doc.get('set_warehouse'), item.get('item_code'), customer_group, max_qty)
 
-        details, temp_batches = get_item_batches(doc.get('set_warehouse'), item.get('item_code'), promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(doc.get('set_warehouse'), item.get('item_code'), promo_data, doc.branch, max_qty)        
         invoice_details.extend(details)
 
         if promo_data:
             for promo in promo_data:
                 if promo["price_or_product_discount"] == "Product" and promo["total_free_qty"] > 0:
-                    details, temp_batches = dispatch_by_batch(temp_batches, [], branch, promo["free_item"], promo["total_free_qty"], True)
+                    details, temp_batches = dispatch_by_batch(temp_batches, [], doc.branch, promo["free_item"], promo["total_free_qty"], True)
                     invoice_details.extend(details)
 
     # Clear existing items
@@ -655,7 +655,7 @@ def process_cart_data(doc):
         })
         doc.append("items", new_item)
 
-    doc.save()
+    #doc.save()
 
     return invoice_details
 
