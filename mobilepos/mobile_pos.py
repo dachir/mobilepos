@@ -624,7 +624,7 @@ def process_cart_data(doc):
     #    """, (doc.get('name')), as_dict=1
     #)
 
-    #frappe.throw(str(cart_data))
+    frappe.throw(str(doc))
 
     for item in doc.get('items'):
         if item.get('qty') == 0:
