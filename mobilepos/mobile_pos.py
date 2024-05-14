@@ -597,6 +597,26 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     return invoice_details, filtered_batches
 
 
+def get_item_date(item_list, item_code, qty):
+    for item in item_list:
+        if item["item_code"] == item_code and item["qty"] > 0:
+            reduced_qty = min(qty, item["qty"])
+
+            # Update quantity in item_list
+            item["qty"] -= reduced_qty
+
+            # If quantity becomes zero, remove the item from item_list
+            if item["qty"] == 0:
+                item_list.remove(item)
+
+    return {
+        "item_list": item_list, 
+        "item_name" : item["item_name"], 
+        "description": item["description"], 
+        "uom" : item["uom"], 
+        "rate": item["rate"]
+    }
+
 @frappe.whitelist()
 def process_cart_data(doc):
     """
@@ -615,14 +635,15 @@ def process_cart_data(doc):
     invoice_details = []
     temp_batches = []
 
-    #items = frappe.db.sql(
-    #    """
-    #    SELECT item_code AS product_code, SUM(qty) AS quantity
-    #    FROM `tabSales Invoice Item`
-    #    WHERE parent = %s
-    #    GROUP BY item_code
-    #    """, (doc.get('name')), as_dict=1
-    #)
+    item_list = frappe.db.sql(
+        """
+        SELECT item_code, item_name, description, uom, rate, SUM(qty) AS qty
+        FROM `tabSales Invoice Item`
+        WHERE parent = %s
+        GROUP BY item_code, item_name, description, uom, rate
+        ORDER BY item_code, rate
+        """, (doc.name), as_dict=1
+    )
 
     for item in doc.items:
         if item.qty == 0:
@@ -648,13 +669,18 @@ def process_cart_data(doc):
     # Insert new items
     for detail in invoice_details:
         #new_item = frappe.new_doc(detail)
+        o = get_item_date(item_list, detail.get("item_code"), detail.get("qty"))
+        item_list = o.item_list
         new_item = frappe.new_doc("Sales Invoice Item")
         new_item.update({
             "item_code": detail.get("item_code"),
             "qty": detail.get("qty"),
             "batch_no": detail.get("batch_no"),
-            "rate": detail.get("rate"),
-        #    # Add more fields as needed
+            "rate": o.rate,
+            "item_name": o.item_name,
+            "description": o.description,
+            "uom": o.uom,
+            "rate": o.rate,
         })
         doc.append("items", new_item)
 
