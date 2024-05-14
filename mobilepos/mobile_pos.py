@@ -619,6 +619,7 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
         SELECT item_code AS product_code, SUM(qty) AS quantity
         FROM `tabSales Invoice Item`
         WHERE parent = %s
+        GROUP BY item_code
         """, (invoice_name), as_dict=1
     )
 
