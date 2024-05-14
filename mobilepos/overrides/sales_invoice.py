@@ -19,7 +19,7 @@ class CustomSalesInvoice(SalesInvoice):
             for i in invoice_details :
                 self.append('items', i)
 
-        zatca_Background_on_submit(self)
+        #zatca_Background_on_submit(self)
 
     def after_submit(self):
         frappe.throw("test")

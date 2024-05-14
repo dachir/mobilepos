@@ -806,6 +806,7 @@ def create_invoice():
             if sale.docstatus == 1:
                 if payment_type == "Cash":
                     if visit_name:
+                        
                         create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
                     else:
                         create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
