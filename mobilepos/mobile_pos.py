@@ -616,7 +616,8 @@ def get_item_data(item_list, item_code, qty):
         "item_name" : item["item_name"], 
         "description": item["description"], 
         "uom" : item["uom"], 
-        "rate": item["rate"]
+        "rate": item["rate"],
+        "income_account": item["income_account"],
     }
 
 @frappe.whitelist()
@@ -639,10 +640,10 @@ def process_cart_data(doc):
 
     item_list = frappe.db.sql(
         """
-        SELECT item_code, item_name, description, uom, rate, SUM(qty) AS qty
+        SELECT item_code, item_name, description, uom, rate,income_account, SUM(qty) AS qty
         FROM `tabSales Invoice Item`
         WHERE parent = %s
-        GROUP BY item_code, item_name, description, uom, rate
+        GROUP BY item_code, item_name, description, uom, rate,income_account
         ORDER BY item_code, rate
         """, (doc.name), as_dict=1
     )
@@ -682,6 +683,8 @@ def process_cart_data(doc):
             "item_name": o.get("item_name"),
             "description": o.get("description"),
             "uom": o.get("uom"),
+            "income_account": o.get("income_account"),
+            "branc": doc.branch
         })
         doc.append("items", new_item)
 
