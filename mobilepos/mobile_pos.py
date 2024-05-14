@@ -615,14 +615,14 @@ def process_cart_data(doc):
     invoice_details = []
     temp_batches = []
 
-    items = frappe.db.sql(
-        """
-        SELECT item_code AS product_code, SUM(qty) AS quantity
-        FROM `tabSales Invoice Item`
-        WHERE parent = %s
-        GROUP BY item_code
-        """, (invoice_name), as_dict=1
-    )
+    #items = frappe.db.sql(
+    #    """
+    #    SELECT item_code AS product_code, SUM(qty) AS quantity
+    #    FROM `tabSales Invoice Item`
+    #    WHERE parent = %s
+    #    GROUP BY item_code
+    #    """, (doc.get('name')), as_dict=1
+    #)
 
     #frappe.throw(str(cart_data))
 
