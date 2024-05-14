@@ -643,7 +643,7 @@ def process_cart_data(doc):
                     invoice_details.extend(details)
 
     # Clear existing items
-    doc["items"] = []
+    doc.items.clear()
 
     # Insert new items
     for detail in invoice_details:
