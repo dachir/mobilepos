@@ -614,18 +614,18 @@ def process_cart_data(cart_data, warehouse, branch, customer):
     invoice_details = []
     temp_batches = []
 
-    frappe.throw(str(cart_data))
+    #frappe.throw(str(cart_data))
 
     for item in cart_data:
-        if int(item["quantity"]) == 0:
+        if int(item.quantity) == 0:
             continue
         
-        max_qty = int(item["quantity"])
+        max_qty = int(item.quantity)
 
         customer_group = frappe.db.get_value("Customer", customer, "customer_group")
-        promo_data = get_promotion(warehouse, item["product_code"], customer_group, max_qty)
+        promo_data = get_promotion(warehouse, item.product_code, customer_group, max_qty)
 
-        details, temp_batches = get_item_batches(warehouse, item["product_code"], promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(warehouse, item.product_code, promo_data, branch, max_qty)        
         invoice_details.extend(details)
 
         if promo_data:
