@@ -598,7 +598,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
 
 
 @frappe.whitelist()
-def process_cart_data(invoice_name, warehouse, branch, customer):
+def process_cart_data(doc):
     """
     Process cart data to generate invoice details and temp batches.
 
@@ -626,16 +626,16 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
 
     #frappe.throw(str(cart_data))
 
-    for item in items:
-        if int(item["quantity"]) == 0:
+    for item in doc.get('items'):
+        if item.get('qty') == 0:
             continue
         
-        max_qty = int(item["quantity"])
+        max_qty = int(item.get('qty'))
 
-        customer_group = frappe.db.get_value("Customer", customer, "customer_group")
-        promo_data = get_promotion(warehouse, item["product_code"], customer_group, max_qty)
+        customer_group = frappe.db.get_value("Customer", doc.get('customer'), "customer_group")
+        promo_data = get_promotion(doc.get('set_warehouse'), item.get('item_code'), customer_group, max_qty)
 
-        details, temp_batches = get_item_batches(warehouse, item["product_code"], promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(doc.get('set_warehouse'), item.get('item_code'), promo_data, branch, max_qty)        
         invoice_details.extend(details)
 
         if promo_data:
@@ -644,10 +644,20 @@ def process_cart_data(invoice_name, warehouse, branch, customer):
                     details, temp_batches = dispatch_by_batch(temp_batches, [], branch, promo["free_item"], promo["total_free_qty"], True)
                     invoice_details.extend(details)
 
-    #invoice = frappe.get_doc("Sales Invoice", invoice_name)
-    #invoice.items.clear()
-    #invoice.items.extend(invoice_details)
-    #invoice.save()
+    # Clear existing items
+    doc["items"] = []
+
+    # Insert new items
+    for detail in invoice_details:
+        new_item = frappe.new_doc("Sales Invoice Item")
+        new_item.update({
+            "item_code": detail.get("item_code"),
+            "qty": detail.get("qty"),
+            # Add more fields as needed
+        })
+        doc.append("items", new_item)
+
+    doc.save()
 
     return invoice_details
 
