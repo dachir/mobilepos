@@ -682,6 +682,7 @@ def process_cart_data(doc):
         frappe.msgprint(str(detail))
         frappe.msgprint(str(o))
         frappe.msgprint("______________________________")
+
         
         if o:
             item_list = o.get("item_list")
