@@ -673,7 +673,7 @@ def process_cart_data(doc):
     doc.items.clear()
 
     frappe.msgprint(str(invoice_details))
-     frappe.msgprint(str(item_list))
+    frappe.msgprint(str(item_list))
     frappe.msgprint("______________________________")
     # Insert new items
     for detail in invoice_details:
