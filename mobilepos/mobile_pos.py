@@ -651,7 +651,16 @@ def process_cart_data(doc):
         """, (doc.name), as_dict=1
     )
 
-    for item in doc.items:
+    items = frappe.db.sql(
+        """
+        SELECT item_code, SUM(qty) AS qty
+        FROM `tabSales Invoice Item`
+        WHERE parent = %s
+        GROUP BY item_code
+        """, (invoice_name), as_dict=1
+    )
+
+    for item in items:
         if item.qty == 0:
             continue
         
