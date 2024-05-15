@@ -612,16 +612,16 @@ def get_item_data(item_list, item_code, qty):
             # If quantity becomes zero, remove the item from item_list
             if item["qty"] == 0:
                 item_list.remove(item)
-            
 
-    return {
-        "item_list": item_list, 
-        "item_name" : item["item_name"], 
-        "description": item["description"], 
-        "uom" : item["uom"], 
-        "rate": item["rate"],
-        "income_account": item["income_account"],
-    }
+            if qty == 0:
+                return {
+                    "item_list": item_list, 
+                    "item_name" : item["item_name"], 
+                    "description": item["description"], 
+                    "uom" : item["uom"], 
+                    "rate": item["rate"],
+                    "income_account": item["income_account"],
+                }
 
 @frappe.whitelist()
 def process_cart_data(doc):
