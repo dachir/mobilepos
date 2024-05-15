@@ -599,6 +599,9 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
 
 def get_item_data(item_list, item_code, qty):
     for item in item_list:
+        if qty == 0:
+            break
+
         if item["item_code"] == item_code and item["qty"] > 0 and qty > 0:
             reduced_qty = min(qty, item["qty"])
 
@@ -673,6 +676,7 @@ def process_cart_data(doc):
     for detail in invoice_details:
         #new_item = frappe.new_doc(detail)
         o = get_item_data(item_list, detail.get("item_code"), detail.get("qty"))
+        frappe.msgprint(str(o))
         item_list = o.get("item_list")
         new_item = frappe.new_doc("Sales Invoice Item")
         new_item.update({
@@ -680,6 +684,7 @@ def process_cart_data(doc):
             "qty": detail.get("qty"),
             "batch_no": detail.get("batch_no"),
             "rate": o.get("rate"),
+            "amount": flt(detail.get("qty")) * flt(o.get("rate")),
             "item_name": o.get("item_name"),
             "description": o.get("description"),
             "uom": o.get("uom"),
