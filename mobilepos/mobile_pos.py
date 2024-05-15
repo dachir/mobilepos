@@ -682,21 +682,23 @@ def process_cart_data(doc):
         frappe.msgprint(str(detail))
         frappe.msgprint(str(o))
         frappe.msgprint("______________________________")
-        item_list = o.get("item_list")
-        new_item = frappe.new_doc("Sales Invoice Item")
-        new_item.update({
-            "item_code": detail.get("item_code"),
-            "qty": detail.get("qty"),
-            "batch_no": detail.get("batch_no"),
-            "rate": o.get("rate"),
-            "amount": flt(detail.get("qty")) * flt(o.get("rate")),
-            "item_name": o.get("item_name"),
-            "description": o.get("description"),
-            "uom": o.get("uom"),
-            "income_account": o.get("income_account"),
-            "branch": doc.branch
-        })
-        doc.append("items", new_item)
+        
+        if o:
+            item_list = o.get("item_list")
+            new_item = frappe.new_doc("Sales Invoice Item")
+            new_item.update({
+                "item_code": detail.get("item_code"),
+                "qty": detail.get("qty"),
+                "batch_no": detail.get("batch_no"),
+                "rate": o.get("rate"),
+                "amount": flt(detail.get("qty")) * flt(o.get("rate")),
+                "item_name": o.get("item_name"),
+                "description": o.get("description"),
+                "uom": o.get("uom"),
+                "income_account": o.get("income_account"),
+                "branch": doc.branch
+            })
+            doc.append("items", new_item)
 
     #doc.save()
 
