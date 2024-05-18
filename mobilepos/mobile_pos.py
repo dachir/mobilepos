@@ -774,7 +774,7 @@ def create_invoice():
         """
         select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
         where g.is_cancelled = 0 and c.territory = %s and c.custom_customer_account_type  IS NULL
-        """, (shop.territory)
+        """, (shop.territory), as_dict=1
     )
 
     pending_amount = pending[0].amount
