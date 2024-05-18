@@ -778,19 +778,24 @@ def create_invoice():
         """, (shop_doc.name), as_dict=1
     )
     # List comprehension to format territories
-    formatted_territories = [f"'{t.territory}'" for t in territories]
+    formatted_territories = [t.territory for t in territories]
 
     # Join the list into a single string
     territories_string = ", ".join(formatted_territories)
 
-    pending = frappe.db.sql(
-        """
+    sql_query = """
         select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
-        where g.is_cancelled = 0 and c.territory IN ({territories_string}) and c.custom_customer_account_type  IS NULL
-        """, as_dict=1
-    )
+        where g.is_cancelled = 0 and c.territory IN (%s) and c.custom_customer_account_type  IS NULL
+    """
+    placeholders = ','.join(['%s'] * len(formatted_territories))
 
-    pending_amount = pending[0].amount
+    # Format the query with placeholders
+    sql_query_formatted = sql_query % placeholders
+
+    # Execute the SQL query with the territory_list as parameters
+    pending = frappe.db.sql(sql_query_formatted, tuple(formatted_territories), as_dict=True)
+
+    pending_amount = pending[0].amount if pending[0].amount else 0
         
     if payment_type == "Credit":
         meta = get_meta("Customer")
