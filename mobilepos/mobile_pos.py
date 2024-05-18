@@ -769,6 +769,15 @@ def create_invoice():
         visit_name = request_dict.get('visit')
 
     shop_doc = frappe.get_doc("Shop", shop)
+
+    pending = frappe.db.sql(
+        """
+        select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
+        where g.is_cancelled = 0 and c.territory = %s
+        """, (shop.territory)
+    )
+
+    pending_amount = pending[0].amount
         
     if payment_type == "Credit":
         meta = get_meta("Customer")
@@ -776,12 +785,13 @@ def create_invoice():
             custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
             if custom_customer_account_type != "CONTRACT CUSTOMER":
                 if not shop_doc.unlimited_credit : 
-                    total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                    
+                    total_pending = flt(pending_amount) + flt(total_amount)
                     if flt(shop_doc.credit_limit) < total_pending :
                         frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         else:
             if not shop_doc.unlimited_credit : 
-                total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+                total_pending = flt(pending_amount) + flt(total_amount)
                 if flt(shop_doc.credit_limit) < total_pending :
                     frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
@@ -867,7 +877,7 @@ def create_invoice():
             if signature == 0:
                 sale.submit()
 
-            total_pending = flt(shop_doc.peding_amount) + flt(total_amount)
+            total_pending = flt(pending_amount) + flt(total_amount)
             shop_doc.peding_amount = total_pending
             shop_doc.save()
 

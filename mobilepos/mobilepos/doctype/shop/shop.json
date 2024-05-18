@@ -376,6 +376,7 @@
    "default": "0",
    "fieldname": "peding_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Peding Amount",
    "read_only": 1
   },
@@ -414,7 +415,7 @@
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-14 09:56:30.499212",
+ "modified": "2024-05-18 09:19:32.570279",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
