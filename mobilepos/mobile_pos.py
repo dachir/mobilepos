@@ -770,11 +770,24 @@ def create_invoice():
 
     shop_doc = frappe.get_doc("Shop", shop)
 
+    territories = frappe.db.sql(
+        """
+        SELECT territory
+        FROM `tabShop Territory`
+        WHERE parent = %s
+        """, (shop_doc.name), as_dict=1
+    )
+    # List comprehension to format territories
+    formatted_territories = [f"'{t.territory}'" for t in territories]
+
+    # Join the list into a single string
+    territories_string = ", ".join(formatted_territories)
+
     pending = frappe.db.sql(
         """
         select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
-        where g.is_cancelled = 0 and c.territory = %s and c.custom_customer_account_type  IS NULL
-        """, (shop_doc.territory), as_dict=1
+        where g.is_cancelled = 0 and c.territory IN ({territories_string}) and c.custom_customer_account_type  IS NULL
+        """, as_dict=1
     )
 
     pending_amount = pending[0].amount
