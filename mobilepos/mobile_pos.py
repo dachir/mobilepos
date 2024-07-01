@@ -225,7 +225,7 @@ def get_invoices(name):
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
 def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None, company=None, nfc_only=1):
-    if not doctype in ["Shop Invoice"]:
+    if not doctype in ["Shop Invoice", "Shop Item"]:
         data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
         data_list =  frappe._dict({
             "total": len(data),
@@ -366,6 +366,22 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             FROM `tabSales Invoice` i INNER JOIN `tabShop` s ON i.sales_reconciliation = s.sales_person
             WHERE i.outstanding_amount > 0 AND s.name= %(shop)s AND i.customer = %(name)s AND i.docstatus = 1 and i.status <> 'Credit Note Issued'
             """,{"shop":shop,"name":name}, as_dict=1
+        )
+
+        data_list =  frappe._dict({
+            "total": len(data),
+            "limit": limit,
+            "offset": offset,
+            list_name: data,
+        })
+
+    elif doctype in ["Shop Item"]:
+        data = frappe.db.sql(
+            """
+            SELECT *
+            FROM `tabShop Item`
+            WHERE status = 0 AND parent = %(shop)s
+            """,{"shop":shop}, as_dict=1
         )
 
         data_list =  frappe._dict({
@@ -891,9 +907,7 @@ def create_invoice():
                 args.update({"name": name})
                 sale.save()
             #add submit
-            signature = frappe.db.get_value("Customer", customer,"signature")
-            if signature == 0:
-                sale.submit()
+            
 
             total_pending = flt(pending_amount) + flt(total_amount)
             shop_doc.peding_amount = total_pending
@@ -911,13 +925,14 @@ def create_invoice():
                 visit.save()
 
             #Gestion du paiment
-            if sale.docstatus == 1:
+            signature = frappe.db.get_value("Customer", customer,"signature")
+            if signature == 0:
                 if payment_type == "Cash":
-                    if visit_name:
-                        
-                        create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
-                    else:
-                        create_pos_cash_invoice_payment(shop, company, customer, sale.name, branch, sale.grand_total)
+                    pay_name = create_pos_cash_payment_invoice(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
+                    add_payment_to_invoice(pay_name)
+                    sale.save()
+                    
+                sale.submit()
                 
     except frappe.DoesNotExistError:
             return None
@@ -1021,6 +1036,76 @@ def create_payment_entry():
         frappe.throw(f"An error occurred: {str(e)}")
         
     return str(payment.name)
+
+
+def create_pos_cash_payment_invoice(shop, company, customer, invoice, branch, grand_total, visit_name = None):
+    pos_doc = frappe.get_doc("Shop", shop)
+    #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
+    shop_doc = frappe.get_doc("Shop", shop)
+    cash_mode_list = frappe.db.sql(
+        """
+        SELECT mode_of_payment
+        FROM `tabShop Mode Payment`
+        WHERE parent = %s AND mode_of_payment LIKE  '%%Cash%%'
+        """, (shop), as_dict = 1
+    )
+
+    cash_mode = ""
+    if cash_mode_list:
+        cash_mode = cash_mode_list[0].mode_of_payment
+    else:
+        # Handle the case when no cash mode is found
+        frappe.throw("No cash mode found for the shop.")
+
+    data = frappe.db.sql(
+        """
+        SELECT m.default_account,a.account_currency
+        FROM `tabMode of Payment Account` m INNER JOIN tabAccount a ON a.name = m.default_account
+        WHERE m.parent = %s AND m.company = %s
+        """,(cash_mode,company), as_dict = 1
+    )
+
+    account = data[0].default_account
+    account_currency = data[0].account_currency
+
+    args = {
+        "doctype": "Payment Entry",
+        "party_type": "Customer",
+        "party": customer,
+        "paid_amount": grand_total,
+        "received_amount": grand_total,
+        "target_exchange_rate": 1.0,
+        "paid_to": account,
+        "paid_to_account_currency": account_currency,
+        "shop": shop,
+        "reference_no": "Cash Sales",
+        "reference_date": frappe.utils.getdate(),
+        #"references":[{"reference_doctype": "Sales Invoice", "reference_name": invoice, "allocated_amount": grand_total}],
+        "branch": branch
+    }
+
+    signature = frappe.db.get_value("Customer", customer,"signature")
+    pay_doc = frappe.get_doc(args)
+    pay_doc.insert()
+    pay_doc.submit()
+        
+
+    if visit_name:
+        visit = frappe.get_doc("Shop Visit", visit_name)
+        visit.append('details',{
+                "document_type": "Payment Entry",
+                "document_name": pay_doc.name,
+                "posting_date": pay_doc.creation,
+                "amount": grand_total,
+            }
+        )
+        visit.save()
+
+        total_pending = flt(shop_doc.peding_amount) - flt(grand_total)
+        shop_doc.peding_amount = total_pending
+        shop_doc.save()
+
+    return pay_doc.name
 
 def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total, visit_name = None):
     pos_doc = frappe.get_doc("Shop", shop)
@@ -1250,9 +1335,48 @@ def get_visits(shop, start, end, limit=10, offset=0):
         "visits": data,
     })
 
+def add_payment_to_invoice(name):
+    unallocated_payment_entries = frappe.db.sql(
+        """
+            select 'Payment Entry' as reference_type, name as reference_name, posting_date,
+            remarks, unallocated_amount as amount
+            from `tabPayment Entry`
+            where name = %s and docstatus = 1 
+        """, (name),
+        as_dict=1,
+    )
+
+    pay = unallocated_payment_entries[0]
+
+    advance_row = {
+        "doctype":  "Sales Invoice Advance",
+        "reference_type": pay.reference_type,
+        "reference_name": pay.reference_name,
+        "remarks": "Cash Payment",
+        "advance_amount": flt(pay.amount),
+        "allocated_amount": flt(pay.amount),
+        "ref_exchange_rate": 1,  
+    }
+
+    self.append("advances", advance_row)
 
 
 
+#///////////////////SUPERMARKET//////////////////////////////////////////
+@frappe.whitelist()
+def update_item():
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+
+    name = request_dict.get('name', None)
+
+    frappe.db.set_value('Shop Item', name, 
+    {
+        "status": 1,
+        "sync": 1,
+    })
+    frappe.db.commit()
 
 
 

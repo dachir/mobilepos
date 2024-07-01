@@ -95,7 +95,9 @@ app_license = "MIT"
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice"
+    "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice",
+    "Item Price": "mobilepos.overrides.item_price.CustomItemPrice",
+    "Stock Ledger Entry": "mobilepos.overrides.stock_ledger_entry.CustomStockLedgerEntry",
 }
 
 # Document Events
@@ -114,23 +116,27 @@ override_doctype_class = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-#	"all": [
-#		"mobilepos.tasks.all"
-#	],
-#	"daily": [
-#		"mobilepos.tasks.daily"
-#	],
-#	"hourly": [
-#		"mobilepos.tasks.hourly"
-#	],
-#	"weekly": [
-#		"mobilepos.tasks.weekly"
-#	],
-#	"monthly": [
-#		"mobilepos.tasks.monthly"
-#	],
-# }
+scheduler_events = {
+    "cron": {
+        "* * * * *": [
+            "mobilepos.tasks.cron"
+        ],
+    },"all": [
+        "mobilepos.tasks.all"
+    ],
+    "daily": [
+        "mobilepos.tasks.daily"
+    ],
+    "hourly": [
+        "mobilepos.tasks.hourly"
+    ],
+    "weekly": [
+        "mobilepos.tasks.weekly"
+    ],
+    "monthly": [
+        "mobilepos.tasks.monthly"
+    ],
+}
 
 # Testing
 # -------

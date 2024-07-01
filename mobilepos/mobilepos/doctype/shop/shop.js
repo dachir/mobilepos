@@ -29,6 +29,16 @@ frappe.ui.form.on('Shop', {
 			);
 		}
 	},
+
+	use_shop_price_list: function(frm) {
+		if (frm.doc.use_shop_price_list == 0){
+			frm.set_value('shop_price_list', "");
+			frm.set_df_property('shop_price_list', 'reqd', 0);
+		}
+		else{
+			rm.set_df_property('shop_price_list', 'reqd', 1);
+		}
+	},
 	// refresh: function(frm) {
 
 	// }

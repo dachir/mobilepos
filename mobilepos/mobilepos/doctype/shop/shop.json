@@ -14,6 +14,8 @@
   "shop_logo",
   "country",
   "territory",
+  "use_shop_price_list",
+  "shop_price_list",
   "column_break_hrytn",
   "company",
   "branch",
@@ -70,7 +72,9 @@
   "column_break_5v8r3",
   "shop_image_url",
   "admin_image_url",
-  "customer_image_url"
+  "customer_image_url",
+  "items_available_tab",
+  "shop_items"
  ],
  "fields": [
   {
@@ -410,12 +414,36 @@
    "fieldname": "administrator",
    "fieldtype": "Check",
    "label": "Administrator"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_shop_price_list",
+   "fieldtype": "Check",
+   "label": "Use Shop Price List"
+  },
+  {
+   "depends_on": "eval:doc.use_shop_price_list==1",
+   "fieldname": "shop_price_list",
+   "fieldtype": "Link",
+   "label": "Shop Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "items_available_tab",
+   "fieldtype": "Tab Break",
+   "label": "Items Available"
+  },
+  {
+   "fieldname": "shop_items",
+   "fieldtype": "Table",
+   "label": "Shop Items",
+   "options": "Shop Item"
   }
  ],
  "image_field": "shop_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-18 09:19:32.570279",
+ "modified": "2024-06-03 11:11:04.868630",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop",
