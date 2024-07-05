@@ -929,7 +929,8 @@ def create_invoice():
             if signature == 0:
                 if payment_type == "Cash":
                     pay_name = create_pos_cash_payment_invoice(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
-                    add_payment_to_invoice(pay_name)
+                    add_payment_to_invoice(pay_name, sale)
+                    sale.save()
                     
                 sale.submit()
                 
@@ -1334,7 +1335,7 @@ def get_visits(shop, start, end, limit=10, offset=0):
         "visits": data,
     })
 
-def add_payment_to_invoice(name):
+def add_payment_to_invoice(name, sale):
     unallocated_payment_entries = frappe.db.sql(
         """
             select 'Payment Entry' as reference_type, name as reference_name, posting_date,
@@ -1357,7 +1358,7 @@ def add_payment_to_invoice(name):
         "ref_exchange_rate": 1,  
     }
 
-    self.append("advances", advance_row)
+    sale.append("advances", advance_row)
 
 
 
