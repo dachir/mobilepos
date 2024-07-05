@@ -930,7 +930,6 @@ def create_invoice():
                 if payment_type == "Cash":
                     pay_name = create_pos_cash_payment_invoice(shop, company, customer, sale.name, branch, sale.grand_total, visit_name)
                     add_payment_to_invoice(pay_name)
-                    sale.save()
                     
                 sale.submit()
                 
