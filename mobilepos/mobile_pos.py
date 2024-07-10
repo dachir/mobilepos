@@ -801,7 +801,7 @@ def create_invoice():
 
     sql_query = """
         select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
-        where g.is_cancelled = 0 and c.territory IN (%s) and c.custom_customer_account_type  IS NULL
+        where g.is_cancelled = 0 and c.territory IN (%s) and ((c.custom_customer_account_type  IS NULL) OR (c.custom_customer_account_type = 'NORMAL'))
     """
     placeholders = ','.join(['%s'] * len(formatted_territories))
 
