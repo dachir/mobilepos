@@ -784,59 +784,59 @@ def create_invoice():
     if request_dict.get('visit'):
         visit_name = request_dict.get('visit')
 
-    #shop_doc = frappe.get_doc("Shop", shop)
+    shop_doc = frappe.get_doc("Shop", shop)
 
-    #territories = frappe.db.sql(
-    #    """
-    #    SELECT territory
-    #    FROM `tabShop Territory`
-    #    WHERE parent = %s
-    #    """, (shop_doc.name), as_dict=1
-    #)
-    ## List comprehension to format territories
-    #formatted_territories = [t.territory for t in territories]
-    #
-    ## Join the list into a single string
+    territories = frappe.db.sql(
+        """
+        SELECT territory
+        FROM `tabShop Territory`
+        WHERE parent = %s
+        """, (shop_doc.name), as_dict=1
+    )
+    # List comprehension to format territories
+    formatted_territories = [t.territory for t in territories]
+    
+    # Join the list into a single string
     #territories_string = ", ".join(formatted_territories)
-    #
-    #sql_query = """
-    #    select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
-    #    where g.is_cancelled = 0 and c.territory IN (%s) and ((c.custom_customer_account_type  IS NULL) OR (c.custom_customer_account_type = 'NORMAL'))
-    #"""
-    #placeholders = ','.join(['%s'] * len(formatted_territories))
-    #
-    ## Format the query with placeholders
-    #sql_query_formatted = sql_query % placeholders
-    #
-    ## Execute the SQL query with the territory_list as parameters
-    ##pending = frappe.db.sql(sql_query_formatted, tuple(formatted_territories), as_dict=True)
-    #
-    #pending_amount = pending[0].amount if pending[0].amount else 0
+    
+    sql_query = """
+        select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
+        where g.is_cancelled = 0 and c.territory IN (%s) and ((c.custom_customer_account_type  IS NULL) OR (c.custom_customer_account_type = 'NORMAL'))
+    """
+    placeholders = ','.join(['%s'] * len(formatted_territories))
+    
+    # Format the query with placeholders
+    sql_query_formatted = sql_query % placeholders
+    
+    # Execute the SQL query with the territory_list as parameters
+    pending = frappe.db.sql(sql_query_formatted, tuple(formatted_territories), as_dict=True)
+    
+    pending_amount = pending[0].amount if pending[0].amount else 0
         
-    #if payment_type == "Credit":
-    #    meta = get_meta("Customer")
-    #    if meta.get_field("custom_customer_account_type"):
-    #        custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
-    #        if custom_customer_account_type != "CONTRACT CUSTOMER":
-    #            if not shop_doc.unlimited_credit : 
-    #                
-    #                total_pending = flt(pending_amount) + flt(total_amount)
-    #                if flt(shop_doc.credit_limit) < total_pending :
-    #                    frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
-    #    else:
-    #        if not shop_doc.unlimited_credit : 
-    #            total_pending = flt(pending_amount) + flt(total_amount)
-    #            if flt(shop_doc.credit_limit) < total_pending :
-    #                frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
-    #    
-    #    outstanding_amt = get_customer_outstanding(
-    #        customer, company, ignore_outstanding_sales_order=True
-    #    )
-    #    credit_limit = get_credit_limit(customer, company)
-    #    total_out = flt(outstanding_amt) + flt(total_amount)
-    #    bal = flt(credit_limit) - total_out
-    #    if bal < 0 :
-    #        frappe.throw("The credit limit is {0}. The outstanding amount is {1}. You can no more add invoices!").format(str(credit_limit), str(total_out))
+    if payment_type == "Credit":
+        meta = get_meta("Customer")
+        if meta.get_field("custom_customer_account_type"):
+            custom_customer_account_type = frappe.db.get_value("Customer", customer,"custom_customer_account_type")
+            if custom_customer_account_type != "CONTRACT CUSTOMER":
+                if not shop_doc.unlimited_credit : 
+                    
+                    total_pending = flt(pending_amount) + flt(total_amount)
+                    if flt(shop_doc.credit_limit) < total_pending :
+                        frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        else:
+            if not shop_doc.unlimited_credit : 
+                total_pending = flt(pending_amount) + flt(total_amount)
+                if flt(shop_doc.credit_limit) < total_pending :
+                    frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
+        
+        outstanding_amt = get_customer_outstanding(
+            customer, company, ignore_outstanding_sales_order=True
+        )
+        credit_limit = get_credit_limit(customer, company)
+        total_out = flt(outstanding_amt) + flt(total_amount)
+        bal = flt(credit_limit) - total_out
+        if bal < 0 :
+            frappe.throw("The credit limit is {0}. The outstanding amount is {1}. You can no more add invoices!").format(str(credit_limit), str(total_out))
 
     invoice_details = []
     temp_batches = []
@@ -909,9 +909,9 @@ def create_invoice():
             #add submit
             
 
-            #total_pending = flt(pending_amount) + flt(total_amount)
-            #shop_doc.peding_amount = total_pending
-            #shop_doc.save()
+            total_pending = flt(pending_amount) + flt(total_amount)
+            shop_doc.peding_amount = total_pending
+            shop_doc.save()
 
             if visit_name:
                 visit = frappe.get_doc("Shop Visit", visit_name)
