@@ -393,6 +393,8 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
 
     return data_list
 
+    
+
 
 @frappe.whitelist()
 def get_daily_report(limit=10, offset=0):
