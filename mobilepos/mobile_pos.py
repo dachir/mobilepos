@@ -729,7 +729,36 @@ def process_cart_data(doc):
 
     return invoice_details
 
+def get_pending_amount(shop_doc):
+    
+    territories = frappe.db.sql(
+        """
+        SELECT territory
+        FROM `tabShop Territory`
+        WHERE parent = %s
+        """, (shop_doc.name), as_dict=1
+    )
+    # List comprehension to format territories
+    formatted_territories = [t.territory for t in territories]
+    
+    # Join the list into a single string
+    #territories_string = ", ".join(formatted_territories)
+    
+    sql_query = """
+        select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
+        where g.is_cancelled = 0 and c.territory IN (%s) and ((c.custom_customer_account_type  IS NULL) OR (c.custom_customer_account_type = 'NORMAL'))
+    """
+    placeholders = ','.join(['%s'] * len(formatted_territories))
+    
+    # Format the query with placeholders
+    sql_query_formatted = sql_query % placeholders
+    
+    # Execute the SQL query with the territory_list as parameters
+    pending = frappe.db.sql(sql_query_formatted, tuple(formatted_territories), as_dict=True)
+    
+    pending_amount = pending[0].amount if pending[0].amount else 0
 
+    return pending_amount
 
 @frappe.whitelist()
 def create_invoice():
@@ -785,33 +814,7 @@ def create_invoice():
         visit_name = request_dict.get('visit')
 
     shop_doc = frappe.get_doc("Shop", shop)
-
-    territories = frappe.db.sql(
-        """
-        SELECT territory
-        FROM `tabShop Territory`
-        WHERE parent = %s
-        """, (shop_doc.name), as_dict=1
-    )
-    # List comprehension to format territories
-    formatted_territories = [t.territory for t in territories]
-    
-    # Join the list into a single string
-    #territories_string = ", ".join(formatted_territories)
-    
-    sql_query = """
-        select sum(g.debit-g.credit) as amount from `tabGL Entry` g Inner Join `tabCustomer` c on c.name = g.party
-        where g.is_cancelled = 0 and c.territory IN (%s) and ((c.custom_customer_account_type  IS NULL) OR (c.custom_customer_account_type = 'NORMAL'))
-    """
-    placeholders = ','.join(['%s'] * len(formatted_territories))
-    
-    # Format the query with placeholders
-    sql_query_formatted = sql_query % placeholders
-    
-    # Execute the SQL query with the territory_list as parameters
-    pending = frappe.db.sql(sql_query_formatted, tuple(formatted_territories), as_dict=True)
-    
-    pending_amount = pending[0].amount if pending[0].amount else 0
+    total_pending = get_pending_amount(shop_doc)
         
     if payment_type == "Credit":
         meta = get_meta("Customer")
@@ -906,12 +909,6 @@ def create_invoice():
             else :
                 args.update({"name": name})
                 sale.save()
-            #add submit
-            
-
-            total_pending = flt(pending_amount) + flt(total_amount)
-            shop_doc.peding_amount = total_pending
-            shop_doc.save()
 
             if visit_name:
                 visit = frappe.get_doc("Shop Visit", visit_name)
@@ -933,6 +930,8 @@ def create_invoice():
                     sale.save()
                     
                 sale.submit()
+                shop_doc.peding_amount = total_pending + flt(total_amount)
+                shop_doc.save()
                 
     except frappe.DoesNotExistError:
             return None
@@ -1010,11 +1009,8 @@ def create_payment_entry():
         payment = frappe.get_doc(request_dict)
         payment.submit()
 
-        #signature = frappe.db.get_value("Customer", customer,"signature")
-        #if signature == 0:
-        #    payment.submit()
-
-        total_pending = flt(shop_doc.peding_amount) - flt(received_amount)
+        shop_doc = frappe.get_doc("Shop", shop)
+        total_pending = get_pending_amount(shop_doc)
         shop_doc.peding_amount = total_pending
         shop_doc.save()
 
@@ -1039,9 +1035,6 @@ def create_payment_entry():
 
 
 def create_pos_cash_payment_invoice(shop, company, customer, invoice, branch, grand_total, visit_name = None):
-    pos_doc = frappe.get_doc("Shop", shop)
-    #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
-    shop_doc = frappe.get_doc("Shop", shop)
     cash_mode_list = frappe.db.sql(
         """
         SELECT mode_of_payment
@@ -1101,14 +1094,11 @@ def create_pos_cash_payment_invoice(shop, company, customer, invoice, branch, gr
         )
         visit.save()
 
-        total_pending = flt(shop_doc.peding_amount) - flt(grand_total)
-        shop_doc.peding_amount = total_pending
-        shop_doc.save()
-
     return pay_doc.name
 
+#to delete
 def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, grand_total, visit_name = None):
-    pos_doc = frappe.get_doc("Shop", shop)
+    #pos_doc = frappe.get_doc("Shop", shop)
     #cash_mode_list = frappe.db.get_list("Shop Mode Payment", filters={"parent": shop, "mode_of_payment": ["LIKE","%Cash%"]}, fields=["mode_of_payment"])
     shop_doc = frappe.get_doc("Shop", shop)
     cash_mode_list = frappe.db.sql(
@@ -1170,7 +1160,7 @@ def create_pos_cash_invoice_payment(shop, company, customer, invoice, branch, gr
         )
         visit.save()
 
-        total_pending = flt(shop_doc.peding_amount) - flt(grand_total)
+        total_pending = get_pending_amount(shop_doc)
         shop_doc.peding_amount = total_pending
         shop_doc.save()
     
