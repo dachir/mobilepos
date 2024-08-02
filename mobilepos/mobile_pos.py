@@ -814,7 +814,7 @@ def create_invoice():
         visit_name = request_dict.get('visit')
 
     shop_doc = frappe.get_doc("Shop", shop)
-    total_pending = get_pending_amount(shop_doc)
+    pending_amount = get_pending_amount(shop_doc)
         
     if payment_type == "Credit":
         meta = get_meta("Customer")
@@ -930,7 +930,7 @@ def create_invoice():
                     sale.save()
                     
                 sale.submit()
-                shop_doc.peding_amount = total_pending + flt(total_amount)
+                shop_doc.peding_amount = pending_amount + flt(total_amount)
                 shop_doc.save()
                 
     except frappe.DoesNotExistError:
