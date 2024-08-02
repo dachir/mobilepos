@@ -290,6 +290,9 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
             )
 
+        shop_doc = frappe.get_doc("Shop", shop)
+        pending_amount = get_pending_amount(shop_doc)
+
         for i in data:
             outstanding_amt = get_customer_outstanding(
                 i.name, company, ignore_outstanding_sales_order=True
@@ -313,7 +316,6 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 """,{"customer": i.name}, as_dict=1
             )
 
-
             i.update({
                 "balance": bal,
                 "outstanding": outstanding_amt,
@@ -322,6 +324,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 "cash_collected": sql_data[0].paid_amount,
                 "total_qty": sql_data[0].total_qty,
                 "invoices_count": sql_data[0].invoices_count,
+                "shop_pending": pending_amount,
             })
         #if name:
             # Filter data where the name starts with name
