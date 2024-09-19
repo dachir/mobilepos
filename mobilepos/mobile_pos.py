@@ -494,7 +494,7 @@ def create_order():
     return str("OK")
 
 
-def get_item_batches(warehouse, item_code, promo_data, branch, max_qty):
+def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False):
     """
     Get item batches based on the given parameters.
 
@@ -518,7 +518,7 @@ def get_item_batches(warehouse, item_code, promo_data, branch, max_qty):
         """, {"warehouse": warehouse, "item_code": item_code}, as_dict = 1
     )
 
-    return dispatch_by_batch(batches,promo_data, branch, item_code, max_qty)
+    return dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item)
 
 
 
@@ -867,7 +867,7 @@ def create_invoice():
                         details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
                         invoice_details.extend(details)
                     else:
-                        details, temp_batches = get_item_batches(warehouse, p["free_item"], [], branch, p["total_free_qty"]) 
+                        details, temp_batches = get_item_batches(warehouse, p["free_item"], [], branch, p["total_free_qty"], True) 
                         invoice_details.extend(details)
 
     args = frappe._dict(
