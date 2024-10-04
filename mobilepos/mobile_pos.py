@@ -35,7 +35,7 @@ def get_promotion(warehouse, item, customer_group, qty):
                             FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
                             ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
             WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND r.customer_group = %(customer_group)s ) AS a
-        WHERE 50 BETWEEN a.min_qty AND a.max_qty
+        WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
         """,{"warehouse": warehouse, "item": item, "customer_group":customer_group, "qty": qty}, as_dict = 1
     )
 
@@ -45,7 +45,7 @@ def get_promotion(warehouse, item, customer_group, qty):
         return []
 
 @frappe.whitelist()
-def configuration(user):
+def configuration_280924(user):    
     data = frappe.get_doc("Shop", {"user":user})
     nfc = frappe.db.sql(
         """
