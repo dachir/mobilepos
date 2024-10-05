@@ -6,6 +6,7 @@ from frappe.core.doctype.user.user import get_timezones
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
+from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
 
 import json
 
