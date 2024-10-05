@@ -941,8 +941,12 @@ def create_invoice():
                 shop_doc.peding_amount = pending_amount + flt(total_amount)
                 shop_doc.save()
                 
+    except UnableToSelectBatchError as e:
+        frappe.log_error(f"Unable to select batch for {args}", "Batch Selection Error")
+        frappe.throw(_("Unable to select batch for Args: {0}".format( args)))
+    
     except frappe.DoesNotExistError:
-            return None
+        return None
         
     return str(sale.name)
 
