@@ -870,9 +870,9 @@ def create_invoice():
                     else:
                         details, temp_batches = get_item_batches(warehouse, p["free_item"], [], branch, p["total_free_qty"], True) 
                         invoice_details.extend(details)
-                elif p["price_or_product_discount"] == "Price":
-                    details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
-                    invoice_details.extend(details) 
+                #elif p["price_or_product_discount"] == "Price":
+                #    details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
+                #    invoice_details.extend(details) 
 
     args = frappe._dict(
         {
