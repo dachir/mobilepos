@@ -18,7 +18,9 @@ def get_balance(customer, company):
 
     return flt(credit_limit) - flt(outstanding_amt)
 
-def get_promotion(warehouse, item, customer_group, qty):
+#def get_promotion(warehouse, item, customer_group, qty):
+def get_promotion(warehouse, item, customer, qty):
+    customer_group = frappe.db.get_value("Customer",customer, "customer_group")
     data = []
 
     data = frappe.db.sql(
@@ -35,9 +37,9 @@ def get_promotion(warehouse, item, customer_group, qty):
                 INNER JOIN (SELECT w.name
                             FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
                             ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
-            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND r.customer_group = %(customer_group)s ) AS a
+            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
         WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
-        """,{"warehouse": warehouse, "item": item, "customer_group":customer_group, "qty": qty}, as_dict = 1
+        """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
     )
 
     if data:
@@ -686,8 +688,9 @@ def process_cart_data(doc):
         
         max_qty = int(item.qty)
 
-        customer_group = frappe.db.get_value("Customer", doc.get('customer'), "customer_group")
-        promo_data = get_promotion(doc.get('set_warehouse'), item.get('item_code'), customer_group, max_qty)
+        #customer_group = frappe.db.get_value("Customer", doc.get('customer'), "customer_group")
+        customer = doc.get('customer')
+        promo_data = get_promotion(doc.get('set_warehouse'), item.get('item_code'), customer, max_qty)
 
         details, temp_batches = get_item_batches(doc.get('set_warehouse'), item.get('item_code'), promo_data, doc.branch, max_qty)        
         invoice_details.extend(details)
@@ -853,8 +856,9 @@ def create_invoice():
         
         max_qty = i["quantity"]
 
-        customer_group = frappe.db.get_value("Customer",customer, "customer_group")
-        promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
+        #customer_group = frappe.db.get_value("Customer",customer, "customer_group")
+        #promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
+        promo_data = get_promotion(warehouse, i["product_code"], customer, max_qty)
 
         details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty)        
         invoice_details.extend(details)
