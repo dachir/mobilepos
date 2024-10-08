@@ -1386,5 +1386,22 @@ def update_item():
     frappe.db.commit()
 
 
+@frappe.whitelist()
+def get_closest_location(latitude, longitude):
+    location = frappe.db.sql(
+        """
+        SELECT name, latitude,longitude,
+        (6371 * ACOS(
+            COS(RADIANS(%(latitude)s)) * COS(RADIANS(latitude)) *
+            COS(RADIANS(longitude) - RADIANS(%(longitude)s)) +
+            SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(latitude))
+        )) AS distance
+    FROM `tabPrice List`
+    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    ORDER BY distance ASC
+    LIMIT 1;
+        """, {"latitude": latitude, "longitude": longitude}, as_dict=1
+    )
 
+    return location[0] if location[0] else []
 
