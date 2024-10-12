@@ -1372,10 +1372,12 @@ def get_orders(customer):
 
     data = frappe.db.sql(
         """
-        SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, i.is_free_item
-        FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
-        WHERE o.customer = %(customer)s AND o.docstatus = 1 AND i.delivered_qty < i.qty
-        GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item
+        FROM
+            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, i.is_free_item
+            FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
+            WHERE o.customer = %(customer)s AND o.docstatus = 1 AND i.delivered_qty < i.qty
+            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item) AS t
         """, {"customer": customer}, as_dict=1
     )
         #Union Commandes par le territory a qui appartient le liste de prix du client itinérant
