@@ -1372,7 +1372,7 @@ def get_orders(customer):
 
     data = frappe.db.sql(
         """
-        SELECT i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, i.is_free_item
+        SELECT ROW_NUMBER() OVER() AS id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, i.is_free_item
         FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name
         WHERE o.customer = %(customer)s AND o.docstatus = 1 AND i.delivered_qty < i.qty
         GROUP BY i.item_code, i.qty, i.rate, i.is_free_item
