@@ -341,6 +341,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
         })
 
     elif doctype in ["Shop Product"]:
+        limit = 100
         data = frappe.db.sql(
             """
             SELECT p.name as id,p.product_code,p.title,p.unit_type,p.unit_value,p.brand,p.category_ids,p.purchase_price, p.selling_price,p.discount_type,p.discount,
