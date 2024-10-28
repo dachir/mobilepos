@@ -1471,9 +1471,10 @@ def create_address():
         address_doc.insert()
         frappe.db.commit()
 
-        code = str(100 + int(address_doc.custom_code))[1:]
-        address_name = customer_name + "_" + code
         customer_name = address_data["links"][0].get("link_name")
+        code = 100 + int(address_doc.custom_code)
+        address_name = customer_name + "_" + str(code)[1:]
+        
         rename_customer_address(address_name, address_doc.name)
 
         return {"status": "success", "message": _("Address created successfully"), "address_name": address_name}
