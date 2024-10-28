@@ -498,7 +498,7 @@ def create_order():
     return str("OK")
 
 
-def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False):
+def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False, id, rate):
     """
     Get item batches based on the given parameters.
 
@@ -522,12 +522,12 @@ def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_
         """, {"warehouse": warehouse, "item_code": item_code}, as_dict = 1
     )
 
-    return dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item)
+    return dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item, id, rate)
 
 
 
 
-def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item = False):
+def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item = False, id, rate):
     """
     Process and dispatch items based on batches and promotional data.
 
@@ -538,6 +538,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
     - item_code (str): The item code.
     - max_qty (float): The maximum quantity to be dispatched.
     - is_free_item (bool): Whether the item is a free item with a rate of 0.
+    - id of order is negative and invoice is positive
 
     Returns:
     - list: List of invoice details.
@@ -566,6 +567,8 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
                     "batch_no": b.batch_no,
                     "branch": branch,
                 })
+                if id < 0 :
+                    details.update({"rate": rate})
                 if len(promo_data) > 0:
                     if promo_data[0].price_or_product_discount == "Price":
                         details.update({"rate": promo_data[0].rate})
@@ -831,12 +834,12 @@ def create_invoice():
             if custom_customer_account_type != "CONTRACT CUSTOMER":
                 if not shop_doc.unlimited_credit : 
                     
-                    total_pending = flt(pending_amount) + flt(total_amount)
+                    total_pending = flt(pending_amount) + flt(total_amount) * 0.15
                     if flt(shop_doc.credit_limit) < total_pending :
                         frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         else:
             if not shop_doc.unlimited_credit : 
-                total_pending = flt(pending_amount) + flt(total_amount)
+                total_pending = flt(pending_amount) + flt(total_amount) * 0.15
                 if flt(shop_doc.credit_limit) < total_pending :
                     frappe.throw("Your pending is {0} is more than your credit limit {1}. You can not credit to this customer!").format(str(total_pending), str(shop_doc.credit_limit))
         
@@ -844,7 +847,7 @@ def create_invoice():
             customer, company, ignore_outstanding_sales_order=True
         )
         credit_limit = get_credit_limit(customer, company)
-        total_out = flt(outstanding_amt) + flt(total_amount)
+        total_out = flt(outstanding_amt) + flt(total_amount) * 0.15
         bal = flt(credit_limit) - total_out
         if bal < 0 :
             frappe.throw("The credit limit is {0}. The outstanding amount is {1}. You can no more add invoices!").format(str(credit_limit), str(total_out))
@@ -861,7 +864,7 @@ def create_invoice():
         #promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
         promo_data = get_promotion(warehouse, i["product_code"], customer, max_qty)
 
-        details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty)        
+        details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty, i["id"], i["price"])        
         invoice_details.extend(details)
         #for d in details:
         #    invoice_details.append(d)
@@ -870,10 +873,10 @@ def create_invoice():
             for p in promo_data:
                 if p["price_or_product_discount"] == "Product" and p["total_free_qty"] > 0:
                     if i["product_code"] == p["free_item"]:
-                        details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
+                        details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True, i["id"], 0)
                         invoice_details.extend(details)
                     else:
-                        details, temp_batches = get_item_batches(warehouse, p["free_item"], [], branch, p["total_free_qty"], True) 
+                        details, temp_batches = get_item_batches(warehouse, p["free_item"], [], branch, p["total_free_qty"], True, i["id"], 0) 
                         invoice_details.extend(details)
                 #elif p["price_or_product_discount"] == "Price":
                 #    details, temp_batches2  = dispatch_by_batch(temp_batches,[], branch, p["free_item"], p["total_free_qty"], True)
@@ -944,7 +947,7 @@ def create_invoice():
                     sale.save()
                     
                 sale.submit()
-                shop_doc.peding_amount = pending_amount + flt(total_amount)
+                shop_doc.peding_amount = pending_amount + flt(total_amount) * 0.15
                 shop_doc.save()
                 
     except UnableToSelectBatchError as e:
@@ -1425,4 +1428,56 @@ def get_closest_location(latitude, longitude):
     )
 
     return location[0] if location[0] else []
+
+
+def rename_customer_address(customer_name, address_name):
+    if customer_name and address_name:
+        # Attempt to rename the address to match the customer's name
+        try:
+            frappe.rename_doc("Address", address_name, customer_name, force=True)
+            frappe.db.commit()
+        except Exception as e:
+            frappe.log_error(e, _("Error renaming Address {0}").format(current_address_name))
+
+
+@frappe.whitelist()
+def create_address():
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+    try:
+        # Extracting address data from the input
+        address_data = request_dict.get("data", {})
+        
+        # Check that required fields are present
+        if not address_data.get("links") or not address_data["links"][0].get("link_name"):
+            frappe.throw(_("Customer link name is required to create the address."))
+        
+        # Create the Address document
+        address_doc = frappe.get_doc({
+            "doctype": "Address",
+            "address_title": address_data.get("address_title"),
+            "address_line1": address_data.get("address_line1"),
+            "city": address_data.get("city"),
+            "state": address_data.get("state"),
+            "pincode": address_data.get("pincode"),
+            "country": address_data.get("country"),
+            "phone": address_data.get("phone"),
+            "email_id": address_data.get("email_id"),
+            "links": address_data.get("links")
+        })
+        
+        # Insert the document into the database
+        address_doc.insert()
+        frappe.db.commit()
+
+        customer_name = address_data["links"][0].get("link_name")
+        rename_customer_address(customer_name, address_doc.name)
+
+        return {"status": "success", "message": _("Address created successfully"), "address_name": address_doc.name}
+    
+    except Exception as e:
+        frappe.log_error(e, _("Error creating Address"))
+        return {"status": "error", "message": str(e)}
+
 
