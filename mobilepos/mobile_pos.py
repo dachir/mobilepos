@@ -947,7 +947,7 @@ def create_invoice():
                     sale.save()
                     
                 sale.submit()
-                shop_doc.peding_amount = pending_amount + flt(total_amount) * 0.15
+                shop_doc.peding_amount = pending_amount + flt(sale.grand_total)
                 shop_doc.save()
                 
     except UnableToSelectBatchError as e:
@@ -1430,14 +1430,14 @@ def get_closest_location(latitude, longitude):
     return location[0] if location[0] else []
 
 
-def rename_customer_address(customer_name, address_name):
-    if customer_name and address_name:
+def rename_customer_address(new_name, address_name):
+    if new_name and address_name:
         # Attempt to rename the address to match the customer's name
         try:
-            frappe.rename_doc("Address", address_name, customer_name, force=True)
+            frappe.rename_doc("Address", address_name, new_name, force=True)
             frappe.db.commit()
         except Exception as e:
-            frappe.log_error(e, _("Error renaming Address {0}").format(current_address_name))
+            frappe.log_error(e, _("Error renaming Address {0}").format(address_name))
 
 
 @frappe.whitelist()
@@ -1471,10 +1471,12 @@ def create_address():
         address_doc.insert()
         frappe.db.commit()
 
+        code = str(100 + int(address_doc.custom_code))[1:]
+        address_name = customer_name + "_" + code
         customer_name = address_data["links"][0].get("link_name")
-        rename_customer_address(customer_name, address_doc.name)
+        rename_customer_address(address_name, address_doc.name)
 
-        return {"status": "success", "message": _("Address created successfully"), "address_name": customer_name}
+        return {"status": "success", "message": _("Address created successfully"), "address_name": address_name}
     
     except Exception as e:
         frappe.log_error(e, _("Error creating Address"))
