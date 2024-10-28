@@ -864,7 +864,7 @@ def create_invoice():
         #promo_data = get_promotion(warehouse, i["product_code"], customer_group, max_qty)
         promo_data = get_promotion(warehouse, i["product_code"], customer, max_qty)
 
-        details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty, i["id"], i["price"])        
+        details, temp_batches = get_item_batches(warehouse, i["product_code"], promo_data, branch, max_qty,False, i["id"], i["price"])        
         invoice_details.extend(details)
         #for d in details:
         #    invoice_details.append(d)
