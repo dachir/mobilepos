@@ -1474,7 +1474,7 @@ def create_address():
         customer_name = address_data["links"][0].get("link_name")
         rename_customer_address(customer_name, address_doc.name)
 
-        return {"status": "success", "message": _("Address created successfully"), "address_name": address_doc.name}
+        return {"status": "success", "message": _("Address created successfully"), "address_name": customer_name}
     
     except Exception as e:
         frappe.log_error(e, _("Error creating Address"))
