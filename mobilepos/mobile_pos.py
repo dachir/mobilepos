@@ -498,7 +498,7 @@ def create_order():
     return str("OK")
 
 
-def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False, id, rate):
+def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False, id=0, rate=0):
     """
     Get item batches based on the given parameters.
 
@@ -527,7 +527,7 @@ def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_
 
 
 
-def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item = False, id, rate):
+def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_item = False, id=0, rate=0):
     """
     Process and dispatch items based on batches and promotional data.
 
