@@ -567,7 +567,7 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
                     "batch_no": b.batch_no,
                     "branch": branch,
                 })
-                if id < 0 :
+                if int(id) < 0 :
                     details.update({"rate": rate})
                 if len(promo_data) > 0:
                     if promo_data[0].price_or_product_discount == "Price":
@@ -590,6 +590,8 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
                     "batch_no": b.batch_no,
                     "branch": branch,
                 })
+                if int(id) < 0 :
+                    details.update({"rate": rate})
                 if len(promo_data) > 0:
                     if promo_data[0].price_or_product_discount == "Price":
                         details.update({"rate": promo_data[0].rate})
@@ -610,6 +612,8 @@ def dispatch_by_batch(batches,promo_data, branch, item_code, max_qty, is_free_it
             "qty": max_qty,
             "branch": branch,
         })
+        if int(id) < 0 :
+            details.update({"rate": rate})
         if len(promo_data) > 0:
             if promo_data[0].price_or_product_discount == "Price":
                 details.update({"rate": promo_data[0].rate})
