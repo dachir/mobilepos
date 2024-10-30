@@ -37,7 +37,8 @@ def get_promotion(warehouse, item, customer, qty):
                 INNER JOIN (SELECT w.name
                             FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
                             ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
-            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
+            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND CURDATE() BETWEEN r.valid_from AND IFNULL(r.valid_upto, '3099-12-31')
+            AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
         WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
         """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
     )
