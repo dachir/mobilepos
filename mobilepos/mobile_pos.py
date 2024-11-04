@@ -1489,3 +1489,123 @@ def create_address():
         return {"status": "error", "message": str(e)}
 
 
+def create_address_2(address_data):
+    try:        
+        # Check that required fields are present
+        if not address_data.get("links") or not address_data["links"][0].get("link_name"):
+            frappe.throw(_("Customer link name is required to create the address."))
+        
+        # Create the Address document
+        address_doc = frappe.get_doc({
+            "doctype": "Address",
+            "address_title": address_data.get("address_title"),
+            "address_line1": address_data.get("address_line1"),
+            "city": address_data.get("city"),
+            "state": address_data.get("state"),
+            "pincode": address_data.get("pincode"),
+            "country": address_data.get("country"),
+            "phone": address_data.get("phone"),
+            "email_id": address_data.get("email_id"),
+            "links": address_data.get("links")
+        })
+        
+        # Insert the document into the database
+        address_doc.insert()
+        frappe.db.commit()
+
+        customer_name = address_data["links"][0].get("link_name")
+        code = 100 + int(address_doc.custom_code)
+        address_name = customer_name + "_" + str(code)[1:]
+        
+        rename_customer_address(address_name, address_doc.name)
+
+        return {"status": "success", "message": _("Address created successfully"), "address_name": address_name}
+    
+    except Exception as e:
+        frappe.log_error(e, _("Error creating Address"))
+        return {"status": "error", "message": str(e)}
+
+
+
+@frappe.whitelist()
+def create_user_and_customer():
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+    try:
+        # Extracting address data from the input
+        email = request_dict.get("email")
+        first_name = request_dict.get("first_name")
+        last_name = request_dict.get("last_name", "")
+        password = request_dict.get("password")
+        address_data = request_dict.get("address_data", {})
+
+        # Step 1: Create the User
+        user_doc = frappe.get_doc({
+            "doctype": "User",
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "new_password": password,
+            "send_welcome_email": 1,
+            "roles": [
+                {"role": "Customer"},
+                {"role": "Sales User"},
+                {"role": "APP CUSTOMER"}
+            ]
+        })
+        user_doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        print("User created successfully.")
+
+        # Step 2: Generate API Secret (Private Key) for the User
+        user_doc.generate_keys()
+        private_key = user_doc.api_secret
+        print(f"Private Key generated: {private_key}")
+
+        # Step 3: Get the API Key (Public Key)
+        public_key = user_doc.api_key
+        print(f"Public Key retrieved: {public_key}")
+
+        # Step 4: Get the Highest Existing Customer Code
+        highest_customer = frappe.get_all(
+            "Customer",
+            filters={"customer_group": "App Customer Group"},
+            fields=["name"],
+            order_by="name desc",
+            limit_page_length=1
+        )
+        
+        highest_customer_code = highest_customer[0].name if highest_customer else "AC00000000"
+        new_customer_code = f"AC{int(highest_customer_code[2:]) + 1:08d}"
+        print(f"New customer code generated: {new_customer_code}")
+
+        # Step 5: Create the Customer Using the New Customer Code
+        customer_doc = frappe.get_doc({
+            "doctype": "Customer",
+            "name": new_customer_code,
+            "custom_customer_code": new_customer_code,
+            "customer_name": f"{first_name} {last_name}",
+            "email_id": email,
+            "customer_group": "App Customer Group",
+            "territory": "All Territories",
+            "customer_type": "Individual"
+        })
+        customer_doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        print("Customer created successfully.")
+
+        create_address_2(address_data)
+
+        # Return all keys and customer information
+        return {
+            "user_email": email,
+            "public_key": public_key,
+            "private_key": private_key,
+            "customer_code": new_customer_code
+        }
+
+    except Exception as e:
+        frappe.log_error(f"Error creating user and customer: {str(e)}", "User and Customer Creation")
+        return {"error": "An error occurred during the creation process", "details": str(e)}
+
