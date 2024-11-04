@@ -1561,8 +1561,7 @@ def create_user_and_customer():
         print("User created successfully.")
 
         # Step 2: Generate API Secret (Private Key) for the User
-        user_doc.generate_keys()
-        private_key = user_doc.api_secret
+        private_key = generate_keys(user_doc.name)["api_secret"]
         print(f"Private Key generated: {private_key}")
 
         # Step 3: Get the API Key (Public Key)
@@ -1594,10 +1593,10 @@ def create_user_and_customer():
             "customer_type": "Individual"
         })
         customer_doc.insert(ignore_permissions=True)
-    
+        frappe.db.commit()
         print("Customer created successfully.")
 
-        create_address_2(address_data)
+        create_address_2(address_data, customer_doc.name)
 
         frappe.db.commit()
 
