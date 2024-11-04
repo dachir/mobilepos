@@ -2,11 +2,12 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, get_time
 from datetime import datetime,timedelta
-from frappe.core.doctype.user.user import get_timezones
+from frappe.core.doctype.user.user import get_timezones, generate_keys
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
 from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
+
 
 import json
 
@@ -1489,12 +1490,8 @@ def create_address():
         return {"status": "error", "message": str(e)}
 
 
-def create_address_2(address_data):
-    try:        
-        # Check that required fields are present
-        if not address_data.get("links") or not address_data["links"][0].get("link_name"):
-            frappe.throw(_("Customer link name is required to create the address."))
-        
+def create_address_2(address_data, customer_name):
+    try:                
         # Create the Address document
         address_doc = frappe.get_doc({
             "doctype": "Address",
@@ -1506,7 +1503,12 @@ def create_address_2(address_data):
             "country": address_data.get("country"),
             "phone": address_data.get("phone"),
             "email_id": address_data.get("email_id"),
-            "links": address_data.get("links")
+            "links": [
+                {
+                    "link_doctype": "Customer",
+                    "link_name": customer_name
+                }
+            ]
         })
         
         # Insert the document into the database
@@ -1592,10 +1594,12 @@ def create_user_and_customer():
             "customer_type": "Individual"
         })
         customer_doc.insert(ignore_permissions=True)
-        frappe.db.commit()
+    
         print("Customer created successfully.")
 
         create_address_2(address_data)
+
+        frappe.db.commit()
 
         # Return all keys and customer information
         return {
