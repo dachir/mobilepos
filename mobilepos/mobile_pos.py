@@ -1515,7 +1515,6 @@ def create_address_2(address_data, customer_name):
         address_doc.insert()
         frappe.db.commit()
 
-        customer_name = address_data["links"][0].get("link_name")
         code = 100 + int(address_doc.custom_code)
         address_name = customer_name + "_" + str(code)[1:]
         
@@ -1549,7 +1548,7 @@ def create_user_and_customer():
             "first_name": first_name,
             "last_name": last_name,
             "new_password": password,
-            "send_welcome_email": 1,
+            "send_welcome_email": 0,
             "roles": [
                 {"role": "Customer"},
                 {"role": "Sales User"},
