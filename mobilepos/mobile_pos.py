@@ -1533,13 +1533,15 @@ def create_user_and_customer():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
+    # Accessing the inner data dictionary
+    data = request_dict.get("data", {})
     #try:
     # Extracting address data from the input
-    email = request_dict.get("email")
-    first_name = request_dict.get("first_name")
-    last_name = request_dict.get("last_name", "")
-    password = request_dict.get("password")
-    address_data = request_dict.get("address_data", {})
+    email = data.get("email")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name", "")
+    password = data.get("password")
+    address_data = data.get("address_data", {})
 
     # Step 1: Create the User
     user_doc = frappe.get_doc({
