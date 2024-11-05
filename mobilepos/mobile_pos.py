@@ -1559,15 +1559,17 @@ def create_user_and_customer():
         })
         user_doc.insert(ignore_permissions=True)
         frappe.db.commit()
-        frappe.msgprint("User created successfully.")
+        print("User created successfully.")
 
         # Step 2: Generate API Secret (Private Key) for the User
         private_key = generate_keys(user_doc.name)["api_secret"]
-        frappe.msgprint(f"Private Key generated: {private_key}")
+        print(f"Private Key generated: {private_key}")
 
         # Step 3: Get the API Key (Public Key)
-        public_key = user_doc.api_key
-        frappe.msgprint(f"Public Key retrieved: {public_key}")
+        #public_key = user_doc.api_key
+        doc = frappe.get_doc("User", email)
+        public_key = doc.api_key
+        print(f"Public Key retrieved: {public_key}")
 
         # Step 4: Get the Highest Existing Customer Code
         highest_customer = frappe.get_all(
@@ -1580,7 +1582,7 @@ def create_user_and_customer():
         
         highest_customer_code = highest_customer[0].name if highest_customer else "AC00000000"
         new_customer_code = f"AC{int(highest_customer_code[2:]) + 1:08d}"
-        frappe.msgprint(f"New customer code generated: {new_customer_code}")
+        print(f"New customer code generated: {new_customer_code}")
 
         # Step 5: Create the Customer Using the New Customer Code
         customer_doc = frappe.get_doc({
