@@ -3,10 +3,12 @@ from frappe import _
 from frappe.utils import flt, getdate, get_time
 from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones, generate_keys
+from frappe.utils.password import check_password
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
 from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
+
 
 
 import json
@@ -1627,7 +1629,7 @@ def login():
     try:
         email = data.get("email")
         password = data.get("password")
-        if not frappe.db.exist("User", {"name": email, "password": password}):
+        if not check_password(email, password, delete_tracker_cache=False):
             return {"error": "Login Issue", "details": "Your credential does not exist"}
 
         # Step 1: Generate API Secret (Private Key) for the User
