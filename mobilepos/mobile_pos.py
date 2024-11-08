@@ -1601,7 +1601,8 @@ def create_user_and_customer():
         frappe.db.commit()
         frappe.msgprint("Customer created successfully.")
 
-        create_address_2(address_data, customer_doc.name)
+        if address_data:
+            create_address_2(address_data, customer_doc.name)
 
         frappe.db.commit()
 
