@@ -1661,3 +1661,32 @@ def login():
         frappe.log_error(f"Error Login: {str(e)}", "User and Customer Creation")
         return {"error": "An error occurred during the login process", "details": str(e)}
 
+
+@frappe.whitelist()
+def get_valid_advertisements():
+    try:
+        # Get today's date
+        today = getdate()
+
+        # Fetch all valid advertisements
+        advertisements = frappe.db.get_list(
+            "App Advertisement",
+            fields=[
+                "name", "text", "from_date", "to_date", "image", "item",
+                "promotion_type", "promotion_rate", "gift", "gift_type",
+                "calculation", "gift_rate"
+            ],
+            filters={
+                "docstatus": 1,
+                "from_date": ["<=", today],
+                "to_date": [">=", today]
+            },
+            order_by="from_date"
+        )
+
+        # Return the list of valid advertisements
+        return {"status": "success", "advertisements": advertisements}
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching advertisements: {str(e)}", "Advertisement Error")
+        return {"status": "error", "message": str(e)}
