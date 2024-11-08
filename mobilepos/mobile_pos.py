@@ -1615,3 +1615,46 @@ def create_user_and_customer():
         frappe.log_error(f"Error creating user and customer: {str(e)}", "User and Customer Creation")
         return {"error": "An error occurred during the creation process", "details": str(e)}
 
+@frappe.whitelist()
+def login():
+    request_data = frappe.request.data
+    request_data_str = request_data.decode('utf-8')
+    request_dict = frappe.parse_json(request_data_str)
+
+     # Accessing the inner data dictionary
+    data = request_dict.get("data", {})
+    
+    try:
+        email = data.get("email")
+        password = data.get("password")
+        if not frappe.db.exist("User", {"name": email, "password": password}):
+            return {"error": "Login Issue", "details": "Your credential does not exist"}
+
+        # Step 1: Generate API Secret (Private Key) for the User
+        private_key = generate_keys(email)["api_secret"]
+        
+        # Step 2: Get the User Info
+        user_doc = frappe.get_doc("User",email)
+
+        # Step 3: Get the API Key (Public Key)
+        cust_doc = frappe.get_doc("Customer",{"email_id":email})
+
+        # Step 4: Create the Customer Using the New Customer Code
+        addr_list = frappe.db.get_list("Address",
+            fields=["name", "address_line1", "address_line2", "address_in_arabic", "city", "county", "state", "country","pincode", "email_id", "phone", "fax"],
+            filters={"name":["LIKE", cust_doc.name +"%"]})
+
+        # Return all keys and customer information
+        return {
+            "first_name": user_doc.first_name,
+            "last_name": user_doc.last_name,
+            "public_key": user_doc.api_key,
+            "private_key": private_key,
+            "customer_code": cust_doc.name,
+            "addresses": addr_list,
+        }
+
+    except Exception as e:
+        frappe.log_error(f"Error Login: {str(e)}", "User and Customer Creation")
+        return {"error": "An error occurred during the login process", "details": str(e)}
+
