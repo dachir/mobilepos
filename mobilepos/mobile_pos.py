@@ -1437,6 +1437,19 @@ def get_closest_location(latitude, longitude):
 
     return location[0] if location[0] else []
 
+@frappe.whitelist()
+def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
+    price_list = frappe.db.sql(
+        """
+        SELECT DISTINCT pt.price_list
+        FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
+        WHERE ta.area = %(area)s
+        LIMIT 1
+        """, {"area": area}, as_dict=1
+    )
+
+    return price_list[0] if price_list[0] else get_closest_location(latitude, longitude)       
+
 
 def rename_customer_address(new_name, address_name):
     if new_name and address_name:
