@@ -1441,7 +1441,7 @@ def get_closest_location(latitude, longitude):
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
     price_list = frappe.db.sql(
         """
-        SELECT DISTINCT pt.price_list
+        SELECT DISTINCT pt.price_list AS name
         FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
         WHERE ta.area = %(area)s
         LIMIT 1
