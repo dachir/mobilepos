@@ -1484,6 +1484,7 @@ def create_address():
             "pincode": address_data.get("pincode"),
             "country": address_data.get("country"),
             "phone": address_data.get("phone"),
+            "custom_area": address_data.get("custom_area"),
             "email_id": address_data.get("email_id"),
             "links": address_data.get("links")
         })
@@ -1517,6 +1518,7 @@ def create_address_2(address_data, customer_name):
             "pincode": address_data.get("pincode"),
             "country": address_data.get("country"),
             "phone": address_data.get("phone"),
+            "custom_area": address_data.get("custom_area"),
             "email_id": address_data.get("email_id"),
             "links": [
                 {
