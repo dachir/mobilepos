@@ -923,7 +923,7 @@ def create_invoice():
                 """
                 SELECT *
                 FROM `tabSales Taxes and Charges`
-                WHERE parent = 'KSA VAT 15% - MH'
+                WHERE parent = 'KSA VAT 15% - AHW'
                 """, as_dict=1
             )
 
