@@ -918,13 +918,30 @@ def create_invoice():
 
     try:
         if invoice_details:
+
+            tax_list = frappe.db.sql(
+                """
+                SELECT *
+                FROM `tabSales Taxes and Charges`
+                WHERE parent = 'KSA VAT 15% - MH'
+                """, as_dict=1
+            )
+
             tax = frappe._dict({
-                "charge_type": "On Net Total",
-                "account_head": "VAT 15% - AHW",
-                "description": "VAT 15% @ 15.0",
-                "rate": 15.0,
+                "charge_type": tax_list[0].charge_type,
+                "account_head": tax_list[0].account_head,
+                "description": tax_list[0].description,
+                "rate": tax_list[0].rate,
                 "doctype": "Sales Taxes and Charges",
             })
+
+            #tax = frappe._dict({
+            #    "charge_type": "On Net Total",
+            #    "account_head": "VAT 15% - AHW",
+            #    "description": "VAT 15% @ 15.0",
+            #    "rate": 15.0,
+            #    "doctype": "Sales Taxes and Charges",
+            #})
             args.update({"taxes": [tax]})
             
             sale = frappe.get_doc(args)
