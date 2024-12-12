@@ -1464,7 +1464,6 @@ def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
         FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
             INNER JOIN `tabItem Price` ip ON ip.price_list = pt.name
         WHERE ta.area = %(area)s
-        LIMIT 1
         """, {"area": area}, as_dict=1
     )
 
