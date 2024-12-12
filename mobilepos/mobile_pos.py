@@ -1454,7 +1454,7 @@ def get_closest_location(latitude, longitude):
         """, {"latitude": latitude, "longitude": longitude}, as_dict=1
     )
 
-    return location[0] if len(location) > 0 else []
+    return location if len(location) > 0 else []
 
 @frappe.whitelist()
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
@@ -1468,7 +1468,7 @@ def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
         """, {"area": area}, as_dict=1
     )
 
-    return price_list[0] if len(price_list) > 0 else get_closest_location(latitude, longitude)       
+    return price_list if len(price_list) > 0 else get_closest_location(latitude, longitude)       
 
 
 def rename_customer_address(new_name, address_name):
