@@ -1439,16 +1439,18 @@ def update_item():
 def get_closest_location(latitude, longitude):
     location = frappe.db.sql(
         """
-        SELECT name, custom_latitude,custom_longitude,
-        (6371 * ACOS(
-            COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
-            COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
-            SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
-        )) AS distance
-    FROM `tabPrice List`
-    WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
-    ORDER BY distance ASC
-    LIMIT 1;
+        SELECT ip.item_code, ip.price_list_rate
+        FROM(
+                SELECT name, custom_latitude,custom_longitude,
+                (6371 * ACOS(
+                    COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
+                    COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
+                    SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
+                )) AS distance
+            FROM `tabPrice List` 
+            WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
+            ORDER BY distance ASC
+            LIMIT 1) AS t INNER JOIN `tabItem Price` ip ON ip.price_list = t.name
         """, {"latitude": latitude, "longitude": longitude}, as_dict=1
     )
 
@@ -1458,8 +1460,9 @@ def get_closest_location(latitude, longitude):
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
     price_list = frappe.db.sql(
         """
-        SELECT DISTINCT pt.price_list AS name, 0 AS custom_latitude, 0 AS custom_longitude, 0 AS distance
+        SELECT DISTINCT ip.item_code, ip.price_list_rate
         FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
+            INNER JOIN `tabItem Price` ip ON ip.price_list = pt.name
         WHERE ta.area = %(area)s
         LIMIT 1
         """, {"area": area}, as_dict=1
