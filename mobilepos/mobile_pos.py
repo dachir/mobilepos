@@ -1504,6 +1504,8 @@ def create_address():
             "country": address_data.get("country"),
             "phone": address_data.get("phone"),
             "custom_area": address_data.get("custom_area"),
+            "custom_longitude": address_data.get("custom_longitude"),
+            "custom_latitude": address_data.get("custom_latitude"),
             "email_id": address_data.get("email_id"),
             "links": address_data.get("links")
         })
@@ -1538,6 +1540,8 @@ def create_address_2(address_data, customer_name):
             "country": address_data.get("country"),
             "phone": address_data.get("phone"),
             "custom_area": address_data.get("custom_area"),
+            "custom_longitude": address_data.get("custom_longitude"),
+            "custom_latitude": address_data.get("custom_latitude"),
             "email_id": address_data.get("email_id"),
             "links": [
                 {
