@@ -1581,6 +1581,7 @@ def create_user_and_customer():
         first_name = data.get("first_name")
         last_name = data.get("last_name", "")
         password = data.get("password")
+        mobile_no = data.get("mobile_no")
         address_data = data.get("address_data", {})
 
         # Step 1: Create the User
@@ -1590,6 +1591,7 @@ def create_user_and_customer():
             "first_name": first_name,
             "last_name": last_name,
             "new_password": password,
+            "mobile_no": mobile_no,
             "send_welcome_email": 0,
             "roles": [
                 {"role": "Customer"},
