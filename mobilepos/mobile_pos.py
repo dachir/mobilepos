@@ -1,4 +1,5 @@
 import frappe
+import re
 from frappe import _
 from frappe.utils import flt, getdate, get_time
 from datetime import datetime,timedelta
@@ -1658,8 +1659,13 @@ def create_user_and_customer():
         frappe.log_error(f"Error creating user and customer: {str(e)}", "User and Customer Creation")
         return {"error": "An error occurred during the creation process", "details": str(e)}
 
+def is_valid_email(email):
+    """Validate if the input is a valid email address."""
+    email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    return re.match(email_regex, email) is not None
+
 @frappe.whitelist()
-def login():
+def login_with_phone():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
@@ -1668,8 +1674,18 @@ def login():
     data = request_dict.get("data", {})
     
     try:
-        email = data.get("email")
+        login_id = data.get("email")
         password = data.get("password")
+
+        # Determine if the login_id is an email or phone
+        if is_valid_email(login_id):
+            email = frappe.db.get_value("User", {"email": login_id}, "name")
+        else:
+            email = frappe.db.get_value("User", {"phone": login_id}, "name")
+
+        if not email:
+            frappe.throw(frappe._("Invalid login credentials"), frappe.AuthenticationError)
+
         if not check_password(email, password, delete_tracker_cache=False):
             return {"error": "Login Issue", "details": "Your credential does not exist"}
 
