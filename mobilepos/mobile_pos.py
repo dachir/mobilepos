@@ -1681,7 +1681,7 @@ def login():
         if is_valid_email(login_id):
             email = frappe.db.get_value("User", {"email": login_id}, "name")
         else:
-            email = frappe.db.get_value("User", {"phone": login_id}, "name")
+            email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
 
         if not email:
             frappe.throw(frappe._("Invalid login credentials"), frappe.AuthenticationError)
