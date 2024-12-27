@@ -1665,7 +1665,7 @@ def is_valid_email(email):
     return re.match(email_regex, email) is not None
 
 @frappe.whitelist()
-def login_with_phone():
+def login():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
