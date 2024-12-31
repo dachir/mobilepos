@@ -1605,8 +1605,10 @@ def create_user_and_customer():
         user_doc.save()
         #print(str(user_doc.flags.in_insert))
         #user_doc.email_new_password(password)
-        update_password(user_doc.name, password)
         frappe.db.commit()
+        
+        update_password(user_doc.name, password)
+        
         print("User created successfully.")
 
         # Step 2: Generate API Secret (Private Key) for the User
