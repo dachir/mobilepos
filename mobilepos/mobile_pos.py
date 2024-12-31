@@ -1601,6 +1601,7 @@ def create_user_and_customer():
             ]
         })
         user_doc.insert(ignore_permissions=True)
+        update_password(email, password)
         frappe.db.commit()
         print("User created successfully.")
 
@@ -1639,7 +1640,6 @@ def create_user_and_customer():
             "customer_type": "Individual"
         })
         customer_doc.insert(ignore_permissions=True)
-        update_password(email, password)
         frappe.db.commit()
         frappe.msgprint("Customer created successfully.")
 
