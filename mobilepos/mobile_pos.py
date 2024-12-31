@@ -1681,11 +1681,11 @@ def login():
         if is_valid_email(login_id):
             email = frappe.db.get_value("User", {"email": login_id}, "name")
             if not email:
-                frappe.throw(frappe._(f"The email {email}  does not exist."), frappe.AuthenticationError)
+                frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
         else:
             email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
             if not email:
-                frappe.throw(frappe._(f"The phone number {email}  does not exist."), frappe.AuthenticationError)
+                frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
 
         if not check_password(email, password, delete_tracker_cache=False):
             return {"error": "Login Issue", "details": "Your credential does not exist"}
