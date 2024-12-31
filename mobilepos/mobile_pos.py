@@ -4,7 +4,7 @@ from frappe import _
 from frappe.utils import flt, getdate, get_time
 from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones, generate_keys
-from frappe.utils.password import check_password
+from frappe.utils.password import check_password, update_password
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
@@ -1639,6 +1639,7 @@ def create_user_and_customer():
             "customer_type": "Individual"
         })
         customer_doc.insert(ignore_permissions=True)
+        update_password(email, password)
         frappe.db.commit()
         frappe.msgprint("Customer created successfully.")
 
