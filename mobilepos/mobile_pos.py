@@ -1601,8 +1601,8 @@ def create_user_and_customer():
             ]
         })
         user_doc.insert(ignore_permissions=True)
-        user_doc.new_password = password
-        user_doc.save()
+        #user_doc.new_password = password
+        #user_doc.save()
         #print(str(user_doc.flags.in_insert))
         #user_doc.email_new_password(password)
         frappe.db.commit()
