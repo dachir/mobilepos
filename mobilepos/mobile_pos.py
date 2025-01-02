@@ -1607,7 +1607,7 @@ def create_user_and_customer():
         #user_doc.email_new_password(password)
         frappe.db.commit()
         
-        update_password(user_doc.name, password)
+        #update_password(user_doc.name, password)
         
         print("User created successfully.")
 
