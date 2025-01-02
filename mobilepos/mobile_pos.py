@@ -1694,7 +1694,10 @@ def login():
             if not email:
                 frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
 
-        if not check_password(email, password, delete_tracker_cache=False):
+        pwd = frappe.db.get_single_value('Abar Settings', 'app_user_password')
+
+        #if not check_password(email, password, delete_tracker_cache=False):
+        if password != pwd:
             return {"error": "Login Issue", "details": "Your credential does not exist"}
 
         # Step 1: Generate API Secret (Private Key) for the User
