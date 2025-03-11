@@ -1,7 +1,7 @@
 import frappe
 import re
 from frappe import _
-from frappe.utils import flt, getdate, get_time
+from frappe.utils import flt, getdate, get_time, now_datetime
 from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones, generate_keys
 from frappe.utils.password import check_password, update_password
@@ -9,6 +9,7 @@ from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
 from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
+#from frappe.website.doctype.personal_data_deletion_request.personal_data_deletion_request import 
 
 
 
@@ -1757,3 +1758,40 @@ def get_valid_advertisements():
     except Exception as e:
         frappe.log_error(f"Error fetching advertisements: {str(e)}", "Advertisement Error")
         return {"status": "error", "message": str(e)}
+
+
+@frappe.whitelist(allow_guest=True)  # Permet l'accès aux utilisateurs non connectés
+#@frappe.whitelist()
+def request_account_deletion(email):
+    """
+    API pour demander la suppression des données personnelles.
+    L'utilisateur envoie son email, et une demande est enregistrée en base de données.
+    """
+
+    # Vérifier si l'email existe dans le système
+    user = frappe.db.exists("User", {"email": email})
+    if not user:
+        frappe.local.response.http_status_code = 404
+        return {"status": "error", "message": _("Email not found")}
+
+    # Vérifier si une demande est déjà en cours
+    existing_request = frappe.get_all(
+        "Personal Data Deletion Request",
+        filters={"email": email, "status": ["not in", ["Deleted"]]},
+        fields=["name"]
+    )
+    if existing_request:
+        frappe.local.response.http_status_code = 400
+        return {"status": "error", "message": _("A request is already pending.")}
+
+    # Créer une demande de suppression
+    doc = frappe.get_doc({
+        "doctype": "Personal Data Deletion Request",
+        "email": email,
+        #"status": "Pending Verification",
+        #"request_date": now_datetime()
+    })
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {"status": "success", "message": _("Deletion request submitted successfully. Please check your email for verification.")}
