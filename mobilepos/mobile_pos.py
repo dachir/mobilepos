@@ -1761,7 +1761,6 @@ def get_valid_advertisements():
 
 
 @frappe.whitelist(allow_guest=True)  # Permet l'accès aux utilisateurs non connectés
-#@frappe.whitelist()
 def request_account_deletion(email):
     """
     API pour demander la suppression des données personnelles.
