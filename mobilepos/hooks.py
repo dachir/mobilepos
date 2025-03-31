@@ -98,6 +98,7 @@ override_doctype_class = {
     "Sales Invoice": "mobilepos.overrides.sales_invoice.CustomSalesInvoice",
     "Item Price": "mobilepos.overrides.item_price.CustomItemPrice",
     "Stock Ledger Entry": "mobilepos.overrides.stock_ledger_entry.CustomStockLedgerEntry",
+    "Personal Data Deletion Request": "mobilepos.overrides.personal_data_deletion_request.CustomPersonalDataDeletionRequest",
 }
 
 # Document Events
@@ -128,7 +129,8 @@ scheduler_events = {
         "mobilepos.tasks.daily"
     ],
     "hourly": [
-        "mobilepos.tasks.hourly"
+        "mobilepos.tasks.hourly",
+        #"mobilepos.overrides.personal_data_deletion_request.process_data_deletion_request",
     ],
     "weekly": [
         "mobilepos.tasks.weekly"

@@ -1787,10 +1787,51 @@ def request_account_deletion(email):
     doc = frappe.get_doc({
         "doctype": "Personal Data Deletion Request",
         "email": email,
-        #"status": "Pending Verification",
+        "status": "Pending Approval",
         #"request_date": now_datetime()
     })
     doc.insert(ignore_permissions=True)
     frappe.db.commit()
 
     return {"status": "success", "message": _("Deletion request submitted successfully. Please check your email for verification.")}
+
+
+@frappe.whitelist()
+def set_primary_address(customer, address):
+    # Trouver tous les liens dynamiques de type "Customer"
+    dynamic_links = frappe.get_all(
+        "Dynamic Link",
+        filters={"link_doctype": "Customer", "link_name": customer, "parenttype": "Address"},
+        fields=["parent"]
+    )
+
+    # Réinitialiser toutes les adresses liées comme non principales
+    for link in dynamic_links:
+        frappe.db.set_value("Address", link.parent, "is_primary_address", 0)
+
+    # Définir l'adresse sélectionnée comme principale
+    frappe.db.set_value("Address", address, "is_primary_address", 1)
+
+@frappe.whitelist()
+def get_primary_address(customer):
+    links = frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "link_doctype": "Customer",
+            "link_name": customer,
+            "parenttype": "Address"
+        },
+        fields=["parent"]
+    )
+
+    for link in links:
+        address_doc = frappe.get_doc("Address", link.parent)
+        if address_doc.is_primary_address:
+            return {
+                "name": address_doc.name,
+                "address_line1": address_doc.address_line1,
+                "city": address_doc.city,
+                "country": address_doc.country
+            }
+
+    frappe.throw(_("No primary address found for customer {0}").format(customer))
