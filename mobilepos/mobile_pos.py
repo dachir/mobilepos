@@ -1812,6 +1812,8 @@ def set_primary_address(customer, address):
     # Définir l'adresse sélectionnée comme principale
     frappe.db.set_value("Address", address, "is_primary_address", 1)
 
+    frappe.db.commit()
+
 @frappe.whitelist()
 def get_primary_address(customer):
     links = frappe.get_all(
