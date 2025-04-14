@@ -1737,20 +1737,28 @@ def get_valid_advertisements():
         today = getdate()
 
         # Fetch all valid advertisements
-        advertisements = frappe.db.get_list(
-            "App Advertisement",
-            fields=[
-                "name", "text", "from_date", "to_date", "image", "item",
-                "promotion_type", "promotion_rate", "gift", "gift_type",
-                "calculation", "gift_rate"
-            ],
-            filters={
-                "docstatus": 1,
-                "from_date": ["<=", today],
-                "to_date": [">=", today]
-            },
-            order_by="from_date"
-        )
+        #advertisements = frappe.db.get_list(
+        #    "App Advertisement",
+        #    fields=[
+        #        "name", "text", "from_date", "to_date", "image", "item",
+        #        "promotion_type", "promotion_rate", "gift", "gift_type",
+        #        "calculation", "gift_rate"
+        #    ],
+        #    filters={
+        #        "docstatus": 1,
+        #        "from_date": ["<=", today],
+        #        "to_date": [">=", today]
+        #    },
+        #    order_by="from_date"
+        #)
+
+        advertisements = frappe.db.sql(
+        """
+        SELECT *
+        FROM `tabApp Advertisement` 
+        WHERE "docstatus" = 1 AND from_date <= %s AND to_date >= %s
+        """, (today), as_dict=1
+    )
 
         # Return the list of valid advertisements
         return {"status": "success", "advertisements": advertisements}
@@ -1837,3 +1845,42 @@ def get_primary_address(customer):
             }
 
     frappe.throw(_("No primary address found for customer {0}").format(customer))
+
+
+#///////////////////////////////////////////////////////////////////////////////////////////////////////
+def select_shop_on_submit(doc, method):
+    if not doc.selling_price_list:
+        return
+
+    # Get location from Price List
+    price_list = frappe.get_doc("Price List", doc.selling_price_list)
+    lat = price_list.get("custom_latitude")
+    lon = price_list.get("custom_longitude")
+
+    if not lat or not lon:
+        return
+        
+    if lat > 0:
+        # Find shops at the same location, sorted by oldest assignment
+        shops = frappe.get_all(
+            "Shop",
+            filters={
+                "custom_latitude": lat,
+                "custom_longitude": lon
+            },
+            fields=["name", "custom_last_assigned_date"],
+            order_by="IFNULL(custom_last_assigned_date, '1900-01-01') ASC"
+        )
+
+        if not shops:
+            return
+
+        selected_shop = shops[0]  # Least recently assigned
+
+        # Set selected shop on Sales Order (custom field)
+        doc.db_set("custom_shop", selected_shop.name)
+
+        # Update the shop's last assignment date
+        frappe.db.set_value("Shop", selected_shop.name, "custom_last_assigned_date", now_datetime())
+
+

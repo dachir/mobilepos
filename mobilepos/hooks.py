@@ -105,14 +105,17 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-#doc_events = {
+doc_events = {
 #	"Sales Invoice": {
 #        "after_submit": "mobilepos.overrides.sales_invoice.test",
 #		"on_update": "mobilepos.overrides.sales_invoice.test",
 #		"on_cancel": "method",
 #		"on_trash": "method"
 #	}
-#}
+    "Sales Order":{
+        "after_save": "mobilepos.mobile_pos.select_shop_on_submit"
+    },
+}
 
 # Scheduled Tasks
 # ---------------
