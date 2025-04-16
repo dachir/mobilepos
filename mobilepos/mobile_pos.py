@@ -1419,6 +1419,28 @@ def get_orders(customer):
         "order": data,
     })
 
+@frappe.whitelist()
+def get_orders_by_shop(shop, customer):
+
+    data = frappe.db.sql(
+        """
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop
+        FROM
+            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, 
+                i.is_free_item, o.customer, o.custom_shop
+            FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
+            WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s AND o.customer = %(customer)s
+            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item, o.customer,o.custom_shop
+            ) AS t
+        """, {"shop": shop, "customer": customer}, as_dict=1
+    )
+        #Union Commandes par le territory a qui appartient le liste de prix du client itinérant
+    return frappe._dict({
+        "total": len(data),
+        "limit": 0,
+        "offset": 0,
+        "order": data,
+    })
 
 #///////////////////SUPERMARKET//////////////////////////////////////////
 @frappe.whitelist()
@@ -1756,7 +1778,7 @@ def get_valid_advertisements():
         """
         SELECT *
         FROM `tabApp Advertisement` 
-        WHERE "docstatus" = 1 AND from_date <= %s AND to_date >= %s
+        WHERE docstatus = 1 AND from_date <= %s AND to_date >= %s
         """, (today), as_dict=1
     )
 
