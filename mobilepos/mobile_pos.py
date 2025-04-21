@@ -263,24 +263,43 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 "updatedAt": i["modified"],
             })
 
-    elif doctype in ["Shop Customer"]:
-        if int(nfc_only) != 99:
-            data = frappe.db.sql(
-                """
-                SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
-                t1.name,CASE WHEN t1.name <> t1.customer_name THEN CONCAT(t1.name,' ',t1.customer_name) ELSE t1.customer_name END AS customer_name,
-                t1.customer_name as description, 
-                t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
-                t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
-                t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
-                FROM (
-                    SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
-                    FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
-                    WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%') AND c.nfc_only= %(nfc_only)s
-                ) AS t1
-                LIMIT %(limit)s OFFSET %(offset)s
-                """,{"shop":shop, "name":name, "nfc_only": nfc_only, "limit":int(limit),"offset":int(offset)}, as_dict=1
-            )
+    elif doctype in ["Shop Customer", "Order Customer"]:
+        data = None
+        if doctype == "Shop Customer":
+            if int(nfc_only) != 99:
+                data = frappe.db.sql(
+                    """
+                    SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
+                    t1.name,CASE WHEN t1.name <> t1.customer_name THEN CONCAT(t1.name,' ',t1.customer_name) ELSE t1.customer_name END AS customer_name,
+                    t1.customer_name as description, 
+                    t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
+                    t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
+                    t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
+                    FROM (
+                        SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
+                        FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
+                        WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%') AND c.nfc_only= %(nfc_only)s
+                    ) AS t1
+                    LIMIT %(limit)s OFFSET %(offset)s
+                    """,{"shop":shop, "name":name, "nfc_only": nfc_only, "limit":int(limit),"offset":int(offset)}, as_dict=1
+                )
+            else:
+                data = frappe.db.sql(
+                    """
+                    SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
+                    t1.name,CASE WHEN t1.name <> t1.customer_name THEN CONCAT(t1.name,' ',t1.customer_name) ELSE t1.customer_name END AS customer_name,
+                    t1.customer_name as description, 
+                    t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
+                    t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
+                    t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
+                    FROM (
+                        SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
+                        FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
+                        WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%')
+                    ) AS t1
+                    LIMIT %(limit)s OFFSET %(offset)s
+                    """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
+                )
         else:
             data = frappe.db.sql(
                 """
@@ -292,12 +311,12 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
                 FROM (
                     SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
-                    FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
-                    WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%')
+                    FROM tabShop s  CROSS JOIN tabCustomer c 
+                    WHERE s.name = %(shop)s AND c.name = %(customer)s
                 ) AS t1
-                LIMIT %(limit)s OFFSET %(offset)s
-                """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
+                """,{"shop":shop, "name":name}, as_dict=1
             )
+
 
         shop_doc = frappe.get_doc("Shop", shop)
         pending_amount = get_pending_amount(shop_doc)
