@@ -312,7 +312,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 FROM (
                     SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
                     FROM tabShop s  CROSS JOIN tabCustomer c 
-                    WHERE s.name = %(shop)s AND c.name = %(customer)s
+                    WHERE s.name = %(shop)s AND c.name = %(name)s
                 ) AS t1
                 """,{"shop":shop, "name":name}, as_dict=1
             )
