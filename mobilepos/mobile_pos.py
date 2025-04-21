@@ -234,7 +234,7 @@ def get_invoices(name):
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
 def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name=None, company=None, nfc_only=1):
-    if not doctype in ["Shop Invoice", "Shop Item"]:
+    if not doctype in ["Shop Invoice", "Shop Item", "Order Customer"]:
         data = frappe.db.get_all(doctype, ["*"], filters={"shop":shop}, limit=limit,limit_start=offset)
         data_list =  frappe._dict({
             "total": len(data),
