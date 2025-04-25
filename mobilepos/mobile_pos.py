@@ -801,7 +801,7 @@ def get_pending_amount(shop_doc):
     return pending_amount
 
 @frappe.whitelist()
-def create_invoice():
+def create_invoice_old():
     """
     Create a Sales Invoice based on the provided request data.
 
@@ -827,6 +827,7 @@ def create_invoice():
     payment_type = ""
     total_amount = 0.0
     visit_name = None
+    is_order = 0
     
     if request_dict.get('invoice_name'):
         name = request_dict.get('invoice_name').strip()
@@ -852,6 +853,15 @@ def create_invoice():
         total_amount = request_dict.get('total_amount')
     if request_dict.get('visit'):
         visit_name = request_dict.get('visit')
+
+    #if request_dict.get('is_order'):
+    #    is_order = request_dict.get('is_order')
+
+    #order_doc = None
+    #if bool(is_order):
+    #    order_name = cart_data[0].order_id
+    #    order_doc = frappe.get_doc("Sales Order", order_name)
+    #    selling_price_list = order_doc.selling_price_list
 
     shop_doc = frappe.get_doc("Shop", shop)
     pending_amount = get_pending_amount(shop_doc)
@@ -955,14 +965,6 @@ def create_invoice():
                 "rate": tax_list[0].rate,
                 "doctype": "Sales Taxes and Charges",
             })
-
-            #tax = frappe._dict({
-            #    "charge_type": "On Net Total",
-            #    "account_head": "VAT 15% - AHW",
-            #    "description": "VAT 15% @ 15.0",
-            #    "rate": 15.0,
-            #    "doctype": "Sales Taxes and Charges",
-            #})
             args.update({"taxes": [tax]})
             
             sale = frappe.get_doc(args)
@@ -972,6 +974,10 @@ def create_invoice():
             else :
                 args.update({"name": name})
                 sale.save()
+
+            #if order_doc != None:
+            #    for c in cart_data:
+            #        order_item = next((x for x in order_doc.items if x.item_code == c["product_code"] and x.is_free_item == c["is_free_item"]), None)
 
             if visit_name:
                 visit = frappe.get_doc("Shop Visit", visit_name)
@@ -1443,13 +1449,12 @@ def get_orders_by_shop(shop):
 
     data = frappe.db.sql(
         """
-        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_id, t.net_total, t.customer_name
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_id, t.net_total, t.customer_name, t.order_item_id
         FROM
-            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, 
-                i.is_free_item, o.customer, o.custom_shop, o.name as order_id, o.net_total, o.customer_name
+            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, i.qty - i.delivered_qty AS qty, i.rate, i.amount, 
+                i.is_free_item, o.customer, o.custom_shop, o.name as order_id, o.net_total, o.customer_name, i.name AS order_item_id
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
             WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s
-            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item, o.customer,o.custom_shop, o.name, o.net_total, o.customer_name
             ) AS t
         """, {"shop": shop}, as_dict=1
     )
@@ -1466,13 +1471,12 @@ def get_orders_by_shop_and_customer(shop, customer):
 
     data = frappe.db.sql(
         """
-        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_item_id
         FROM
-            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, 
-                i.is_free_item, o.customer, o.custom_shop
+            (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, i.qty - i.delivered_qty AS qty, i.rate, i.amount, 
+                i.is_free_item, o.customer, o.custom_shop, i.name AS order_item_id
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
             WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s AND o.customer = %(customer)s
-            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item, o.customer,o.custom_shop
             ) AS t
         """, {"shop": shop, "customer": customer}, as_dict=1
     )
@@ -1821,7 +1825,7 @@ def get_valid_advertisements():
         SELECT *
         FROM `tabApp Advertisement` 
         WHERE docstatus = 1 AND from_date <= %s AND to_date >= %s
-        """, (today), as_dict=1
+        """, (today,today), as_dict=1
     )
 
         # Return the list of valid advertisements
@@ -1946,5 +1950,100 @@ def select_shop_on_submit(doc, method):
 
         # Update the shop's last assignment date
         frappe.db.set_value("Shop", selected_shop.name, "custom_last_assigned_date", now_datetime())
+
+
+#/////////////////////////////////////////NEW APP //////////////////////////////////////////////////////////////////////
+# api/invoice_api.py
+
+import frappe
+from frappe.utils import flt
+from utils.invoice_creation import (
+    parse_invoice_request,
+    build_invoice_items,
+    generate_sales_invoice,
+    update_sales_order_items,
+    validate_credit_limit
+)
+
+
+def handle_payment_and_visit(sale, shop_doc, payment_type, customer, branch, shop, visit_name):
+    if visit_name:
+        visit = frappe.get_doc("Shop Visit", visit_name)
+        visit.append('details', {
+            "document_type": "Sales Invoice",
+            "document_name": sale.name,
+            "posting_date": sale.creation,
+            "amount": sale.grand_total,
+        })
+        visit.save()
+
+    signature = frappe.db.get_value("Customer", customer, "signature")
+    if signature == 0 and payment_type == "Cash":
+        pay_name = create_pos_cash_payment_invoice(shop, shop_doc.company, customer, sale.name, branch, sale.grand_total, visit_name)
+        add_payment_to_invoice(pay_name, sale)
+        sale.save()
+
+    sale.submit()
+    shop_doc.peding_amount = flt(shop_doc.peding_amount or 0) + flt(sale.grand_total)
+    shop_doc.save()
+
+
+@frappe.whitelist()
+def create_invoice():
+    request_data = frappe.request.data
+    request_dict = frappe.parse_json(request_data.decode("utf-8"))
+    parsed = parse_invoice_request(request_dict)
+
+    shop_doc = frappe.get_doc("Shop", parsed["shop"])
+    pending_amount = get_pending_amount(shop_doc)
+
+    if parsed["payment_type"] == "Credit":
+        validate_credit_limit(parsed["customer"], parsed["company"], shop_doc, parsed["total_amount"])
+
+    try:
+        invoice_details, cart_items = build_invoice_items(
+            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=False
+        )
+
+        args = frappe._dict({
+            "doctype": "Sales Invoice",
+            "customer": parsed["customer"],
+            "company": parsed["company"],
+            "branch": parsed["branch"],
+            "set_warehouse": parsed["warehouse"],
+            "update_stock": 1,
+            "sales_reconciliation": parsed["sales_person"],
+            "selling_price_list": parsed["selling_price_list"],
+            "shop": parsed["shop"],
+            "items": invoice_details,
+        })
+
+        tax_list = frappe.db.sql("""
+            SELECT * FROM `tabSales Taxes and Charges`
+            WHERE parent = 'KSA VAT 15% - AHW'
+        """, as_dict=True)
+
+        if tax_list:
+            args["taxes"] = [{
+                "charge_type": tax_list[0]["charge_type"],
+                "account_head": tax_list[0]["account_head"],
+                "description": tax_list[0]["description"],
+                "rate": tax_list[0]["rate"],
+                "doctype": "Sales Taxes and Charges"
+            }]
+
+        sale = generate_sales_invoice(args)
+        handle_payment_and_visit(sale, shop_doc, parsed["payment_type"], parsed["customer"], parsed["branch"], parsed["shop"], parsed["visit_name"])
+
+        update_sales_order_items(cart_items)
+
+    except UnableToSelectBatchError as e:
+        frappe.log_error(f"Unable to select batch for args: {args}", "Batch Selection Error")
+        frappe.throw(_(f"Unable to select batch: {str(e)}"))
+    except frappe.DoesNotExistError:
+        return None
+
+    return sale.name
+
 
 
