@@ -255,7 +255,7 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
 
 
 
-    frappe.throw(json.dumps(invoice_details, indent=2))
+    #frappe.throw(json.dumps(invoice_details, indent=2))
 
     return invoice_details, cart_items
 
