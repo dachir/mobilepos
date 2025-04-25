@@ -1,6 +1,7 @@
 # utils/invoice_creation.py
 
 import frappe
+import json
 from frappe.utils import flt, cint
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 
@@ -251,6 +252,10 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
                 "billed_amt": i["amount"],
                 "delivered_qty": i["quantity"]
             })
+
+
+
+    frappe.throw(json.dumps(invoice_details, indent=2))
 
     return invoice_details, cart_items
 
