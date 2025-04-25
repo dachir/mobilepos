@@ -1955,7 +1955,7 @@ def select_shop_on_submit(doc, method):
 #/////////////////////////////////////////NEW APP //////////////////////////////////////////////////////////////////////
 # api/invoice_api.py
 
-from utils.invoice_creation import (
+from mobilepos.mobilepos.utils.invoice_creation import (
     validate_credit_limit,
     parse_invoice_request,
     build_invoice_items,
