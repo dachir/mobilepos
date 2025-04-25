@@ -2003,7 +2003,7 @@ def create_invoice():
 
     try:
         invoice_details, cart_items = build_invoice_items(
-            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=bool(ed["is_order"])
+            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=bool(parsed["is_order"])
         )
 
         if bool(parsed["is_order"]):
