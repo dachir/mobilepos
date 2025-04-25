@@ -231,7 +231,6 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
 
         if is_order:
             for d in details:
-                frappe.throw("###########" + str(is_order))
                 d["sales_order"] = i["order_id"]
                 d["so_detail"] = i["order_item_id"]
                 
