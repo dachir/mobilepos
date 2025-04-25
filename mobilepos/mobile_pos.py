@@ -2003,10 +2003,10 @@ def create_invoice():
 
     try:
         invoice_details, cart_items = build_invoice_items(
-            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=False
+            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=bool(ed["is_order"])
         )
 
-        if parsed["is_order"]:
+        if bool(parsed["is_order"]):
             order_id = parsed["cart_data"][0]["order_id"]
             selling_price_list = frappe.db.get_value("Sales Order", order_id, "selling_price_list")
         else:

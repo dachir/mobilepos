@@ -230,7 +230,7 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
         )
 
         frappe.throw("###########" + str(is_order))
-        if is_order == 1:
+        if is_order:
             frappe.throw("###########" + str(is_order))
             for d in details:
                 frappe.throw("###########" + str(is_order))
