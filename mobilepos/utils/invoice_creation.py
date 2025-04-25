@@ -227,6 +227,12 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
             warehouse, i["product_code"], promo_data, branch,
             max_qty, is_free, i["id"], i["price"]
         )
+
+        if is_order:
+            for d in details:
+                d["sales_order"] = i["order_id"]
+                d["so_detail"] = i["order_item_id"]
+                
         invoice_details.extend(details)
 
         if not is_order and promo_data:
