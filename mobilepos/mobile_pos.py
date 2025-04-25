@@ -1955,14 +1955,12 @@ def select_shop_on_submit(doc, method):
 #/////////////////////////////////////////NEW APP //////////////////////////////////////////////////////////////////////
 # api/invoice_api.py
 
-import frappe
-from frappe.utils import flt
 from utils.invoice_creation import (
+    validate_credit_limit,
     parse_invoice_request,
     build_invoice_items,
     generate_sales_invoice,
-    update_sales_order_items,
-    validate_credit_limit
+    update_sales_order_items
 )
 
 
@@ -1984,7 +1982,7 @@ def handle_payment_and_visit(sale, shop_doc, payment_type, customer, branch, sho
         sale.save()
 
     sale.submit()
-    shop_doc.peding_amount = flt(shop_doc.peding_amount or 0) + flt(sale.grand_total)
+    shop_doc.peding_amount = flt(get_pending_amount(shop_doc)) + flt(sale.grand_total)
     shop_doc.save()
 
 
@@ -1998,7 +1996,10 @@ def create_invoice():
     pending_amount = get_pending_amount(shop_doc)
 
     if parsed["payment_type"] == "Credit":
-        validate_credit_limit(parsed["customer"], parsed["company"], shop_doc, parsed["total_amount"])
+        if parsed["is_order"] == 0:
+            validate_credit_limit(parsed["customer"], parsed["company"], shop_doc, parsed["total_amount"])
+        else:
+            frappe.throw("App Users cannot get credit")
 
     try:
         invoice_details, cart_items = build_invoice_items(
@@ -2019,9 +2020,11 @@ def create_invoice():
         })
 
         tax_list = frappe.db.sql("""
-            SELECT * FROM `tabSales Taxes and Charges`
-            WHERE parent = 'KSA VAT 15% - AHW'
-        """, as_dict=True)
+            SELECT stc.*
+            FROM `tabSales Taxes and Charges Template` tct
+            JOIN `tabSales Taxes and Charges` stc ON stc.parent = tct.name
+            WHERE tct.company = %s AND tct.is_default = 1 AND tct.disabled = 0
+        """, (parsed["company"],), as_dict=True)
 
         if tax_list:
             args["taxes"] = [{
@@ -2037,6 +2040,8 @@ def create_invoice():
 
         update_sales_order_items(cart_items)
 
+    except frappe.ValidationError as e:
+        frappe.throw(str(e))
     except UnableToSelectBatchError as e:
         frappe.log_error(f"Unable to select batch for args: {args}", "Batch Selection Error")
         frappe.throw(_(f"Unable to select batch: {str(e)}"))
@@ -2044,6 +2049,7 @@ def create_invoice():
         return None
 
     return sale.name
+
 
 
 
