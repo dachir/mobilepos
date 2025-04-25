@@ -229,9 +229,7 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
             max_qty, is_free, i["id"], i["price"]
         )
 
-        frappe.throw("###########" + str(is_order))
         if is_order:
-            frappe.throw("###########" + str(is_order))
             for d in details:
                 frappe.throw("###########" + str(is_order))
                 d["sales_order"] = i["order_id"]
