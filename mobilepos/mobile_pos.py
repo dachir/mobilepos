@@ -2006,6 +2006,11 @@ def create_invoice():
             parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=False
         )
 
+        if parsed["is_order"]:
+            order_id = parsed["cart_data"][0]["order_id"]
+            selling_price_list = frappe.db.get_value("Sales Order", order_id, "selling_price_list")
+        else:
+            selling_price_list = parsed["selling_price_list"]
         args = frappe._dict({
             "doctype": "Sales Invoice",
             "customer": parsed["customer"],
@@ -2014,7 +2019,7 @@ def create_invoice():
             "set_warehouse": parsed["warehouse"],
             "update_stock": 1,
             "sales_reconciliation": parsed["sales_person"],
-            "selling_price_list": parsed["selling_price_list"],
+            "selling_price_list": selling_price_list ,
             "shop": parsed["shop"],
             "items": invoice_details,
         })
