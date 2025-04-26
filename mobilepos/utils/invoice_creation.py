@@ -213,7 +213,7 @@ def parse_invoice_request(request_dict):
     }
 
 
-def build_invoice_items(cart_data, warehouse, branch, is_order=False):
+def build_invoice_items(cart_data, warehouse, branch, customer, is_order=False):
     invoice_details = []
     cart_items = []
     temp_batches = []
@@ -222,7 +222,7 @@ def build_invoice_items(cart_data, warehouse, branch, is_order=False):
         max_qty = i["quantity"]
         is_free = bool(i.get("is_free_item"))
         order_item_name = i.get("order_item_name")
-        promo_data = [] if is_order else get_promotion(warehouse, i["product_code"], i.get("customer"), max_qty)
+        promo_data = [] if is_order else get_promotion(warehouse, i["product_code"], customer, max_qty)
 
         details, temp_batches = get_item_batches(
             warehouse, i["product_code"], promo_data, branch,

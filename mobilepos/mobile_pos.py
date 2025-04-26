@@ -801,7 +801,7 @@ def get_pending_amount(shop_doc):
     return pending_amount
 
 @frappe.whitelist()
-def create_invoice():
+def create_invoice_old():
     """
     Create a Sales Invoice based on the provided request data.
 
@@ -1987,7 +1987,7 @@ def handle_payment_and_visit(sale, shop_doc, payment_type, customer, branch, sho
 
 
 @frappe.whitelist()
-def create_invoice_new():
+def create_invoice():
     request_data = frappe.request.data
     request_dict = frappe.parse_json(request_data.decode("utf-8"))
     parsed = parse_invoice_request(request_dict)
@@ -2003,7 +2003,7 @@ def create_invoice_new():
 
     try:
         invoice_details, cart_items = build_invoice_items(
-            parsed["cart_data"], parsed["warehouse"], parsed["branch"], is_order=bool(parsed["is_order"])
+            parsed["cart_data"], parsed["warehouse"], parsed["branch"], parsed["customer"], is_order=bool(parsed["is_order"])
         )
 
         if bool(parsed["is_order"]):
