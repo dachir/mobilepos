@@ -1,7 +1,7 @@
 import frappe
 import re
 from frappe import _
-from frappe.utils import flt, getdate, get_time, now_datetime
+from frappe.utils import flt, getdate, get_time, now_datetime, add_to_date
 from datetime import datetime,timedelta
 from frappe.core.doctype.user.user import get_timezones, generate_keys
 from frappe.utils.password import check_password, update_password
@@ -230,6 +230,36 @@ def get_invoices(name):
         "success": True,
         "invoice": data,
     })
+
+
+@frappe.whitelist()
+def get_last_invoice_within_5_minutes(shop):
+    # 1. Compute the threshold datetime (now − 4 minutes)
+    threshold = add_to_date(now_datetime(), minutes=-5)
+
+    # 2. Query for invoices created on or after that threshold
+    invoices = frappe.get_all(
+        "Sales Invoice",
+        filters=[
+            ["creation", ">=", threshold],
+            ["shop", "=", shop],               # only this shop
+            ["docstatus", "=", 1],          # only submitted invoices
+        ],
+        fields=["*"],
+        order_by="creation desc",
+        limit_page_length=1
+    )
+
+    # 3. If none found, return a helpful message
+    if not invoices:
+        return {"success": False, "message": "No Sales Invoice was created in the last 4 minutes."}
+
+    # 4. Otherwise, take the first (newest), look up tax_id, and return
+    invoice = invoices[0]
+    invoice["tax_id"] = frappe.db.get_value("Customer", invoice["customer"], "tax_id")
+
+    return {"success": True, "invoice": invoice}
+
 
 #@frappe.whitelist(allow_guest=True)
 @frappe.whitelist()
