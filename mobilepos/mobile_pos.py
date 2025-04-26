@@ -1976,14 +1976,15 @@ def handle_payment_and_visit(sale, shop_doc, payment_type, customer, branch, sho
         visit.save()
 
     signature = frappe.db.get_value("Customer", customer, "signature")
-    if signature == 0 and payment_type == "Cash":
-        pay_name = create_pos_cash_payment_invoice(shop, shop_doc.company, customer, sale.name, branch, sale.grand_total, visit_name)
-        add_payment_to_invoice(pay_name, sale)
-        sale.save()
+    if signature == 0: 
+        if payment_type == "Cash":
+            pay_name = create_pos_cash_payment_invoice(shop, shop_doc.company, customer, sale.name, branch, sale.grand_total, visit_name)
+            add_payment_to_invoice(pay_name, sale)
+            sale.save()
 
-    sale.submit()
-    shop_doc.peding_amount = flt(get_pending_amount(shop_doc)) + flt(sale.grand_total)
-    shop_doc.save()
+        sale.submit()
+        shop_doc.peding_amount = flt(get_pending_amount(shop_doc)) + flt(sale.grand_total)
+        shop_doc.save()
 
 
 @frappe.whitelist()
