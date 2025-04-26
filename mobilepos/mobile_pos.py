@@ -243,7 +243,8 @@ def get_last_invoice_within_5_minutes(shop):
         filters=[
             ["creation", ">=", threshold],
             ["shop", "=", shop],               # only this shop
-            ["docstatus", "=", 1],          # only submitted invoices
+            ["docstatus", "=", 1],          # only submitted invoices 
+            ["custom_print", "<", 1],
         ],
         fields=["name"],
         order_by="creation desc",
