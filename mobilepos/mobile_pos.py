@@ -2059,6 +2059,7 @@ def create_invoice():
             "selling_price_list": selling_price_list ,
             "shop": parsed["shop"],
             "items": invoice_details,
+            "payment_type": parsed["payment_type"],
         })
 
         tax_list = frappe.db.sql("""
