@@ -1068,6 +1068,9 @@ def get_name_list(doctype,filters=None, limit=10, offset=0):
 
     return names
 
+@frappe.whitelist()
+def pdate_invoice_custom_print(name):
+    frappe.db.set_value('Sales Invoice', name, 'custom_print', 1)
 
 @frappe.whitelist()
 def create_payment_entry():
