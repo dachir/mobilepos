@@ -245,7 +245,7 @@ def get_last_invoice_within_5_minutes(shop):
             ["shop", "=", shop],               # only this shop
             ["docstatus", "=", 1],          # only submitted invoices
         ],
-        fields=["*"],
+        fields=["name"],
         order_by="creation desc",
         limit_page_length=1
     )
@@ -255,10 +255,12 @@ def get_last_invoice_within_5_minutes(shop):
         return {"success": False, "message": "No Sales Invoice was created in the last 4 minutes."}
 
     # 4. Otherwise, take the first (newest), look up tax_id, and return
-    invoice = invoices[0]
-    invoice["tax_id"] = frappe.db.get_value("Customer", invoice["customer"], "tax_id")
+    invoice_name = invoices[0]
+    data = frappe.get_doc("Sales Invoice", invoice_name)
+    tax_id = frappe.db.get_value("Customer", data.customer, "tax_id")
+    data.update({"tax_id":tax_id})
 
-    return {"success": True, "invoice": invoice}
+    return {"success": True, "invoice": data}
 
 
 #@frappe.whitelist(allow_guest=True)
