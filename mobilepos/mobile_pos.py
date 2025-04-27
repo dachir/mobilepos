@@ -2063,7 +2063,7 @@ def create_invoice():
         })
 
         sales_team = frappe._dict({
-            "sales_person": sales_person,
+            "sales_person": parsed["sales_person"],
             "allocated_percentage": 100,
             "doctype": "Sales Team",
         })
