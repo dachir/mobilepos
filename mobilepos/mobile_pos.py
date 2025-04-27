@@ -2062,6 +2062,14 @@ def create_invoice():
             "payment_type": parsed["payment_type"],
         })
 
+        sales_team = frappe._dict({
+            "sales_person": sales_person,
+            "allocated_percentage": 100,
+            "doctype": "Sales Team",
+        })
+        if sales_team:
+            args.update({"sales_team": [sales_team],})
+
         tax_list = frappe.db.sql("""
             SELECT stc.*
             FROM `tabSales Taxes and Charges Template` tct
