@@ -1587,7 +1587,7 @@ def get_closest_location(latitude, longitude):
             SELECT ip.item_code, ip.price_list_rate
             FROM (
                 SELECT name,
-                       (6371 * ACOS(
+                        (6371 * ACOS(
                             COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
                             COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
                             SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
