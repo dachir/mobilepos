@@ -9,6 +9,7 @@ from erpnext.setup.utils import get_exchange_rate
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 from frappe.model.meta import get_meta
 from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
+from shapely.geometry import Point, Polygon
 #from frappe.website.doctype.personal_data_deletion_request.personal_data_deletion_request import 
 
 
@@ -1540,40 +1541,82 @@ def update_item():
     })
     frappe.db.commit()
 
+def get_branch_name_from_geofence(latitude, longitude):
+    # Fetch geofence data from ERPNext
+    branches = frappe.get_all('Branch', fields=['name', 'custom_geofence'])
+
+    point = Point(longitude, latitude)
+
+    for b in branches:
+        if not b.custom_geofence:
+            continue  # Ignore les branches sans géofence
+        # The geofence_coordinates should be stored as a list of tuples, e.g., [(41.6500, 27.5400), (41.6600, 27.5500), ...]
+        geofence = json.loads(b.custom_geofence)
+        coords = geofence["geometry"]["coordinates"][0]
+        #print(str(coords))
+
+        # Create the polygon for the current geofence
+        polygon = Polygon(coords)
+
+        # Check if the point is inside the polygon
+        if polygon.contains(point):
+            return b['name']  # Return the name of the city (e.g., 'Hail')
+
+    return None  # If the point is not inside any geofence
 
 @frappe.whitelist()
 def get_closest_location(latitude, longitude):
-    location = frappe.db.sql(
-        """
-        SELECT ip.item_code, ip.price_list_rate
-        FROM(
-                SELECT name, custom_latitude,custom_longitude,
-                (6371 * ACOS(
-                    COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
-                    COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
-                    SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
-                )) AS distance
-            FROM `tabPrice List` 
-            WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
-            ORDER BY distance ASC
-            LIMIT 1) AS t INNER JOIN `tabItem Price` ip ON ip.price_list = t.name
-        """, {"latitude": latitude, "longitude": longitude}, as_dict=1
-    )
+    if not latitude or not longitude:
+        frappe.throw("Latitude and longitude are required.")
 
-    return location if len(location) > 0 else []
+    item_prices = []
+    branch = get_branch_name_from_geofence(latitude, longitude)
+
+    if branch:
+        item_prices = frappe.db.sql(
+            """
+            SELECT ip.item_code, ip.price_list_rate
+            FROM `tabPrice List` pl 
+            INNER JOIN `tabItem Price` ip ON ip.price_list = pl.name
+            WHERE pl.custom_branch = %(branch)s
+            """, {"branch": branch}, as_dict=1
+        )
+    else:
+        item_prices = frappe.db.sql(
+            """
+            SELECT ip.item_code, ip.price_list_rate
+            FROM (
+                SELECT name,
+                       (6371 * ACOS(
+                            COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
+                            COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
+                            SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
+                        )) AS distance
+                FROM `tabPrice List`
+                WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
+                ORDER BY distance ASC
+                LIMIT 1
+            ) AS closest
+            INNER JOIN `tabItem Price` ip ON ip.price_list = closest.name
+            """, {"latitude": latitude, "longitude": longitude}, as_dict=1
+        )
+
+    return item_prices or []
+
 
 @frappe.whitelist()
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
-    price_list = frappe.db.sql(
-        """
-        SELECT DISTINCT ip.item_code, ip.price_list_rate
-        FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
-            INNER JOIN `tabItem Price` ip ON ip.price_list = pt.name
-        WHERE ta.area = %(area)s
-        """, {"area": area}, as_dict=1
-    )
+    #price_list = frappe.db.sql(
+    #    """
+    #    SELECT DISTINCT ip.item_code, ip.price_list_rate
+    #    FROM `tabTerritory Area` ta INNER JOIN `tabTerritory Sub` ts ON ta.parent = ts.territory INNER JOIN `tabPricelist Territory` pt ON ts.parent = pt.name
+    #        INNER JOIN `tabItem Price` ip ON ip.price_list = pt.name
+    #    WHERE ta.area = %(area)s
+    #    """, {"area": area}, as_dict=1
+    #)
 
-    return price_list if len(price_list) > 0 else get_closest_location(latitude, longitude)       
+    #return price_list if len(price_list) > 0 else get_closest_location(latitude, longitude)   
+    return get_closest_location(latitude, longitude)    
 
 
 def rename_customer_address(new_name, address_name):
