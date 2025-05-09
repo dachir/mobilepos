@@ -1616,6 +1616,14 @@ def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
     #)
 
     #return price_list if len(price_list) > 0 else get_closest_location(latitude, longitude)   
+
+    
+    #price_list = get_closest_location(latitude, longitude) 
+    #price_struct = {
+    #    "name":
+    #    "branch":
+    #    "price_list": price_list
+    #}
     return get_closest_location(latitude, longitude)    
 
 
