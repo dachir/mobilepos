@@ -234,7 +234,7 @@ def get_invoices(name):
 
 
 @frappe.whitelist()
-def get_last_invoice_within_5_minutes(shop):
+def get_last_invoice_within_5_minutes(shop, customer):
     # 1. Compute the threshold datetime (now − 4 minutes)
     threshold = add_to_date(now_datetime(), minutes=-5)
 
@@ -243,7 +243,8 @@ def get_last_invoice_within_5_minutes(shop):
         "Sales Invoice",
         filters=[
             ["creation", ">=", threshold],
-            ["shop", "=", shop],               # only this shop
+            ["shop", "=", shop],
+            ["customer", "=", customer],               # only this shop
             ["docstatus", "=", 1],          # only submitted invoices 
             ["custom_print", "<", 1],
         ],
