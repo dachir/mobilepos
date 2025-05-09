@@ -2150,11 +2150,14 @@ def create_invoice():
     return sale.name
 
 
-@frappe.whitelist()
-def update_invoice_custom_print(name=None):
+@frappe.whitelist(allow_guest=False)
+def update_invoice_custom_print():
+    data = frappe.local.form_dict
+
+    name = data.get("name")
     if not name:
-        frappe.throw("Missing Sales Invoice name.")
+        frappe.throw(_("Missing parameter: name"))
 
     frappe.db.set_value('Sales Invoice', name, 'custom_print', 1)
 
-
+    return {"status": "success", "message": f"Invoice {name} updated."}
