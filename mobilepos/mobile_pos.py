@@ -1585,24 +1585,25 @@ def get_closest_location(latitude, longitude):
             """, {"branch": branch}, as_dict=1
         )
     else:
-        item_prices = frappe.db.sql(
-            """
-            SELECT ip.item_code, ip.price_list_rate
-            FROM (
-                SELECT name,
-                        (6371 * ACOS(
-                            COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
-                            COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
-                            SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
-                        )) AS distance
-                FROM `tabPrice List`
-                WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
-                ORDER BY distance ASC
-                LIMIT 1
-            ) AS closest
-            INNER JOIN `tabItem Price` ip ON ip.price_list = closest.name
-            """, {"latitude": latitude, "longitude": longitude}, as_dict=1
-        )
+        #item_prices = frappe.db.sql(
+        #    """
+        #    SELECT ip.item_code, ip.price_list_rate
+        #    FROM (
+        #        SELECT name,
+        #                (6371 * ACOS(
+        #                    COS(RADIANS(%(latitude)s)) * COS(RADIANS(custom_latitude)) *
+        #                    COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
+        #                    SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
+        #                )) AS distance
+        #        FROM `tabPrice List`
+        #        WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
+        #        ORDER BY distance ASC
+        #        LIMIT 1
+        #    ) AS closest
+        #    INNER JOIN `tabItem Price` ip ON ip.price_list = closest.name
+        #    """, {"latitude": latitude, "longitude": longitude}, as_dict=1
+        #)
+        frappe.throw(_("We do not deserve this area"))
 
     return item_prices or []
 
