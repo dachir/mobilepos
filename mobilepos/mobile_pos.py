@@ -1555,7 +1555,12 @@ def get_branch_name_from_geofence(latitude, longitude):
             continue  # Ignore les branches sans géofence
         # The geofence_coordinates should be stored as a list of tuples, e.g., [(41.6500, 27.5400), (41.6600, 27.5500), ...]
         geofence = json.loads(b.custom_geofence)
-        coords = geofence["geometry"]["coordinates"][0]
+        geometry = geofence.get("geometry")
+        coords=[]
+        if not isinstance(geometry, dict):
+            coords = geofence["features"][0]["geometry"]["coordinates"][0]
+        else:
+            coords = geofence["geometry"]["coordinates"][0]
         #print(str(coords))
 
         # Create the polygon for the current geofence
