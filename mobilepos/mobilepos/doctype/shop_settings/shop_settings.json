@@ -7,7 +7,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "unlimited_credit"
+  "unlimited_credit",
+  "column_break_lcc0l",
+  "geofence_price_list",
+  "closest_location_price_list",
+  "use_default_price_list",
+  "price_list"
  ],
  "fields": [
   {
@@ -15,12 +20,42 @@
    "fieldname": "unlimited_credit",
    "fieldtype": "Check",
    "label": "Unlimited Credit"
+  },
+  {
+   "fieldname": "column_break_lcc0l",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_default_price_list",
+   "fieldtype": "Check",
+   "label": "Use Default Price List for App Users"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "mandatory_depends_on": "eval:doc.use_default_price_list==1",
+   "options": "Price List",
+   "read_only_depends_on": "eval:doc.use_default_price_list==0"
+  },
+  {
+   "default": "0",
+   "fieldname": "closest_location_price_list",
+   "fieldtype": "Check",
+   "label": "Closest Location Price List"
+  },
+  {
+   "default": "0",
+   "fieldname": "geofence_price_list",
+   "fieldtype": "Check",
+   "label": "Geofence Price List"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-03-06 11:04:36.802058",
+ "modified": "2025-05-13 10:06:59.400909",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "Shop Settings",
