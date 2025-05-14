@@ -1628,13 +1628,13 @@ def get_closest_location(latitude, longitude):
 def get_app_defaut_price_list():
     use_default_price_list = frappe.db.get_single_value("Shop Settings", "use_default_price_list")
     price_list = frappe.db.get_single_value("Shop Settings", "price_list")
-        item_prices = frappe.db.sql(
-            """
-            SELECT DISTINCT item_code, price_list_rate
-            FROM `tabItem Price` 
-            WHERE price_list = %(price_list)s
-            """, {"price_list": price_list}, as_dict=1
-        )    
+    item_prices = frappe.db.sql(
+        """
+        SELECT DISTINCT item_code, price_list_rate
+        FROM `tabItem Price` 
+        WHERE price_list = %(price_list)s
+        """, {"price_list": price_list}, as_dict=1
+    )    
         
     return item_prices or []
 
