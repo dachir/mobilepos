@@ -1682,6 +1682,7 @@ def create_address():
             "doctype": "Address",
             "address_title": address_data.get("address_title"),
             "address_line1": address_data.get("address_line1"),
+            "address_line2": address_data.get("address_line2"),
             "city": address_data.get("city"),
             "state": address_data.get("state"),
             "pincode": address_data.get("pincode"),
