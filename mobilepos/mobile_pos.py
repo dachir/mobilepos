@@ -2203,7 +2203,7 @@ def on_submit(doc, method):
 
         # set your custom fields
         pe.mode_of_payment = "MY FATOORAH"
-        pe.reference_no    = doc.custom_transaction_id
+        pe.reference_no    = doc.transaction_id
         pe.paid_to         = "101002024 - MY FATOORAH PAYMENT GATEWAY ACCOUNT - AHW"
 
         # save & submit
