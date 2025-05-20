@@ -1469,13 +1469,13 @@ def get_orders(customer):
 
     data = frappe.db.sql(
         """
-        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.custom_payment_gateway as gateway
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.payment_gateway as gateway
         FROM
             (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, SUM(i.qty - i.delivered_qty) AS qty, i.rate, SUM(i.amount) AS amount, i.is_free_item,
-            o.custom_payment_gateway
+            o.payment_gateway
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
             WHERE o.customer = %(customer)s AND o.docstatus = 1 AND i.delivered_qty < i.qty
-            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item, o.custom_payment_gateway) AS t
+            GROUP BY p.name, i.item_code, i.qty, i.rate, i.is_free_item, o.payment_gateway) AS t
         """, {"customer": customer}, as_dict=1
     )
         #Union Commandes par le territory a qui appartient le liste de prix du client itinérant
@@ -1492,11 +1492,11 @@ def get_orders_by_shop(shop):
     data = frappe.db.sql(
         """
         SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_id, t.net_total, 
-        t.customer_name, t.order_item_id, t.custom_payment_gateway as gateway
+        t.customer_name, t.order_item_id, t.payment_gateway as gateway
         FROM
             (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, i.qty - i.delivered_qty AS qty, i.rate, i.amount, 
                 i.is_free_item, o.customer, o.custom_shop, o.name as order_id, o.net_total, o.customer_name, i.name AS order_item_id,
-                o.custom_payment_gateway
+                o.payment_gateway
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
             WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s
             ) AS t
@@ -1515,10 +1515,10 @@ def get_orders_by_shop_and_customer(shop, customer):
 
     data = frappe.db.sql(
         """
-        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_item_id, t.custom_payment_gateway as gateway
+        SELECT t.id, - t.id AS product_id, t.item_code, t.qty, t.rate, t.amount, t.is_free_item, t.customer,t.custom_shop, t.order_item_id, t.payment_gateway as gateway
         FROM
             (SELECT ROW_NUMBER() OVER() AS id, p.name AS product_id, i.item_code, i.qty - i.delivered_qty AS qty, i.rate, i.amount, 
-                i.is_free_item, o.customer, o.custom_shop, i.name AS order_item_id, o.custom_payment_gateway
+                i.is_free_item, o.customer, o.custom_shop, i.name AS order_item_id, o.payment_gateway
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
             WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s AND o.customer = %(customer)s
             ) AS t
