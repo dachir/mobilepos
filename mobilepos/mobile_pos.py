@@ -30,6 +30,27 @@ def get_promotion(warehouse, item, customer, qty):
     customer_group = frappe.db.get_value("Customer",customer, "customer_group")
     data = []
 
+    #data = frappe.db.sql(
+    #    """
+    #    SELECT *, (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
+    #    FROM(
+    #        SELECT DISTINCT ri.item_code, r.name,r.price_or_product_discount,
+    #            CASE WHEN r.same_item THEN ri.item_code ELSE r.free_item END as free_item,
+    #            min_qty,
+    #            CASE WHEN r.price_or_product_discount = 'Product' THEN free_qty ELSE 0 END  as free_qty, 
+    #            CASE WHEN r.price_or_product_discount = 'Price' THEN  rate ELSE 0 END as rate,
+    #            CASE WHEN max_qty = 0 THEN 999999999999 ELSE max_qty END as max_qty
+    #        FROM `tabPricing Rule` r INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
+    #            INNER JOIN (SELECT w.name
+    #                        FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
+    #                        ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
+    #        WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND CURDATE() BETWEEN r.valid_from AND IFNULL(r.valid_upto, '3099-12-31')
+    #        AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
+    #    WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
+    #    """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
+    #)
+
+
     data = frappe.db.sql(
         """
         SELECT *, (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
@@ -41,11 +62,23 @@ def get_promotion(warehouse, item, customer, qty):
                 CASE WHEN r.price_or_product_discount = 'Price' THEN  rate ELSE 0 END as rate,
                 CASE WHEN max_qty = 0 THEN 999999999999 ELSE max_qty END as max_qty
             FROM `tabPricing Rule` r INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
-                INNER JOIN (SELECT w.name
-                            FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
-                            ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
             WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND CURDATE() BETWEEN r.valid_from AND IFNULL(r.valid_upto, '3099-12-31')
-            AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
+            AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) 
+            AND (
+                length(r.warehouse) = 0
+                OR EXISTS (
+                    SELECT 1
+                    FROM tabWarehouse w
+                    INNER JOIN (
+                        SELECT lft, rgt 
+                        FROM tabWarehouse 
+                        WHERE name = %(warehouse)s
+                    ) t ON w.lft >= t.lft AND w.rgt <= t.rgt
+                    WHERE w.name = r.warehouse
+                )
+            )
+            
+            ) AS a
         WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
         """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
     )
