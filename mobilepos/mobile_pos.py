@@ -1616,9 +1616,10 @@ def get_branch_name_from_geofence(latitude, longitude):
                 if branch:
                     item_prices = frappe.db.sql(
                         """
-                        SELECT ip.item_code, ip.price_list_rate
+                        SELECT ip.item_code, ip.price_list_rate, i.image
                         FROM `tabPrice List` pl 
                         INNER JOIN `tabItem Price` ip ON ip.price_list = pl.name
+                            INNER JOIN tabItem i ON i.name = ip.item_code
                         WHERE pl.custom_branch = %(branch)s
                         """, {"branch": branch}, as_dict=1
                     )
@@ -1637,7 +1638,7 @@ def get_closest_location(latitude, longitude):
 
         item_prices = frappe.db.sql(
             """
-            SELECT ip.item_code, ip.price_list_rate
+            SELECT ip.item_code, ip.price_list_rate, i.image
             FROM (
                 SELECT name,
                         (6371 * ACOS(
@@ -1645,12 +1646,13 @@ def get_closest_location(latitude, longitude):
                             COS(RADIANS(custom_longitude) - RADIANS(%(longitude)s)) +
                             SIN(RADIANS(%(latitude)s)) * SIN(RADIANS(custom_latitude))
                         )) AS distance
-                FROM `tabPrice List`
+                FROM `tabPrice List` 
                 WHERE custom_latitude IS NOT NULL AND custom_longitude IS NOT NULL
                 ORDER BY distance ASC
                 LIMIT 1
             ) AS closest
             INNER JOIN `tabItem Price` ip ON ip.price_list = closest.name
+                INNER JOIN tabItem i ON i.name = ip.item_code
             """, {"latitude": latitude, "longitude": longitude}, as_dict=1
         )
             
@@ -1663,9 +1665,9 @@ def get_app_defaut_price_list():
     price_list = frappe.db.get_single_value("Shop Settings", "price_list")
     item_prices = frappe.db.sql(
         """
-        SELECT DISTINCT item_code, price_list_rate
-        FROM `tabItem Price` 
-        WHERE price_list = %(price_list)s
+        SELECT DISTINCT ip.item_code, ip.price_list_rate, i.image
+        FROM `tabItem Price` ip INNER JOIN tabItem i ON i.name = ip.item_code
+        WHERE ip.price_list = %(price_list)s
         """, {"price_list": price_list}, as_dict=1
     )    
         
