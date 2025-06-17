@@ -1689,14 +1689,34 @@ def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
     return item_prices    
 
 
-def rename_customer_address(new_name, address_name):
-    if new_name and address_name:
-        # Attempt to rename the address to match the customer's name
+#def rename_customer_address(new_name, address_name):
+#    if new_name and address_name:
+#        # Attempt to rename the address to match the customer's name
+#        try:
+#            frappe.rename_doc("Address", address_name, new_name, force=True)
+#            frappe.db.commit()
+#        except Exception as e:
+#            frappe.log_error(e, _("Error renaming Address {0}").format(address_name))
+
+
+def rename_customer_address(new_name, old_name):
+    if new_name and old_name:
         try:
-            frappe.rename_doc("Address", address_name, new_name, force=True)
+            # Renommer directement dans tabAddress
+            frappe.db.sql("""
+                UPDATE `tabAddress` SET name = %s WHERE name = %s
+            """, (new_name, old_name))
+
+            # Mettre à jour les références dans tabDynamic Link (si l’adresse est liée à d'autres documents)
+            frappe.db.sql("""
+                UPDATE `tabDynamic Link` SET parent = %s 
+                WHERE parenttype = 'Address' AND parent = %s
+            """, (new_name, old_name))
+
             frappe.db.commit()
         except Exception as e:
-            frappe.log_error(e, _("Error renaming Address {0}").format(address_name))
+            frappe.log_error(e, _("Fast rename failed for Address {0}").format(old_name))
+
 
 
 @frappe.whitelist()
