@@ -2329,6 +2329,11 @@ def create_guest_order():
         response = create_order(**order_data)
         order_name = response.get("sales_order") or response.get("order_name")
 
+        # Injection dans le Sales Order
+        for fieldname, value in guest_info.items():
+            if value:
+                frappe.db.set_value("Sales Order", order_name, fieldname, value)
+
         enqueue(
             create_user_and_customer,
             queue="default",
@@ -2371,6 +2376,7 @@ def create_user_and_customer(guest_data=None, order_name=None):
             log = frappe.get_doc({
                 "doctype": "App Registration Log",
                 "email": email,
+                "mobile": mobile_no,
                 "order": order_name,
                 "status": "Pending",
                 "retry_count": 0
@@ -2499,5 +2505,55 @@ def check_user_registration_status(email=None):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error in check_user_registration_status")
         return {"error": str(e)}
+
+
+@frappe.whitelist(allow_guest=True)
+def check_user_registration_status(email=None, mobile=None):
+    email = email or frappe.form_dict.get("email")
+    mobile = mobile or frappe.form_dict.get("mobile")
+
+    if not email and not mobile:
+        return {"error": "You must provide at least email or mobile number."}
+
+    filters = {}
+    if email:
+        filters["email"] = email
+    if mobile:
+        filters["custom_address_phone"] = mobile
+
+    try:
+        # Cherche le log correspondant à l'email ou au numéro
+        log = frappe.get_all(
+            "App Registration Log",
+            filters=filters,
+            fields=[
+                "status", "customer_code", "user_email",
+                "public_key", "private_key", "order", "creation"
+            ],
+            order_by="creation desc",
+            limit_page_length=1
+        )
+
+        if not log:
+            return {
+                "status": "Not Found",
+                "registered": False
+            }
+
+        entry = log[0]
+        return {
+            "status": entry["status"],
+            "registered": entry["status"] == "Completed",
+            "customer_code": entry["customer_code"] if entry["status"] == "Completed" else None,
+            "public_key": entry["public_key"],
+            "private_key": entry["private_key"],
+            "user_email": entry["user_email"],
+            "order": entry["order"]
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "check_user_registration_status error")
+        return {"error": str(e)}
+
 
 

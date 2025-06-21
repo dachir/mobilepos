@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "email",
+  "mobile",
   "sales_order",
   "status",
   "retry_count",
@@ -64,11 +65,16 @@
    "fieldname": "private_key",
    "fieldtype": "Data",
    "label": "Private Key"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-22 00:32:53.520011",
+ "modified": "2025-06-22 00:37:45.274554",
  "modified_by": "Administrator",
  "module": "Mobilepos",
  "name": "App Registration Log",
