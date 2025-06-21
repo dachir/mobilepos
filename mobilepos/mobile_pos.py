@@ -11,6 +11,7 @@ from frappe.model.meta import get_meta
 from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
 from shapely.geometry import Point, Polygon
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry as map_pe
+from frappe.utils.background_jobs import enqueue
 #from frappe.website.doctype.personal_data_deletion_request.personal_data_deletion_request import 
 
 
@@ -1809,7 +1810,7 @@ def create_address_2(address_data, customer_name):
 
 
 @frappe.whitelist()
-def create_user_and_customer():
+def zzz_create_user_and_customer():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
     request_dict = frappe.parse_json(request_data_str)
@@ -2274,3 +2275,229 @@ def on_submit(doc, method):
     else:
         # block submission until MyFatoorah callback arrives
         frappe.throw(_("You need to wait for myfootrah response"))
+
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def create_guest_order():
+    try:
+        request_data = frappe.request.data
+        request_dict = frappe.parse_json(request_data.decode("utf-8"))
+
+        guest_info = {
+            "custom_is_guest_order": 1,
+            "custom_email": request_dict.get("email"),
+            "custom_first_name": request_dict.get("first_name"),
+            "custom_last_name": request_dict.get("last_name"),
+            "custom_address_line1": request_dict.get("address_line1"),
+            "custom_address_line2": request_dict.get("address_line2"),
+            "custom_address_in_arabic": request_dict.get("address_in_arabic"),
+            "custom_address_city": request_dict.get("address_city"),
+            "custom_address_county": request_dict.get("address_county"),
+            "custom_address_state": request_dict.get("address_state"),
+            "custom_address_country": request_dict.get("address_country"),
+            "custom_address_pincode": request_dict.get("address_pincode"),
+            "custom_address_email_id": request_dict.get("address_email_id"),
+            "custom_address_phone": request_dict.get("address_phone"),
+            "custom_address_fax": request_dict.get("address_fax")
+        }
+
+        email = guest_info.get("custom_email")
+        if not email:
+            frappe.throw("Email is required for guest order.")
+
+        existing_log = frappe.get_all(
+            "App Registration Log",
+            filters={"email": email, "status": "Completed"},
+            limit_page_length=1
+        )
+        if existing_log:
+            frappe.throw("Un compte a déjà été créé pour cet utilisateur. Veuillez vous connecter.")
+
+        cart = request_dict.get("cart")
+        customer_name = email or guest_info["custom_first_name"] + " " + guest_info["custom_last_name"]
+
+        if not cart or not customer_name:
+            frappe.throw("Données de panier ou nom client manquantes.")
+
+        order_data = {"cart": cart, "customer_name": customer_name}
+        order_data.update(guest_info)
+
+        #from path.to.create_order import create_order  # adapter à ton chemin réel
+        response = create_order(**order_data)
+        order_name = response.get("sales_order") or response.get("order_name")
+
+        enqueue(
+            create_user_and_customer,
+            queue="default",
+            timeout=300,
+            is_async=True,
+            guest_data=guest_info,
+            order_name=order_name
+        )
+
+        return {
+            "success": True,
+            "order_name": order_name
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Guest Order Creation Failed")
+        return {"error": "Order creation failed", "details": str(e)}
+
+
+@frappe.whitelist(allow_guest=True)
+def create_user_and_customer(guest_data=None, order_name=None):
+    is_background = bool(order_name)
+
+    if not guest_data:
+        request_data = frappe.request.data
+        request_dict = frappe.parse_json(request_data.decode('utf-8'))
+        guest_data = request_dict.get("data", {})
+
+    try:
+        email = guest_data.get("custom_email") or guest_data.get("email")
+        first_name = guest_data.get("custom_first_name") or guest_data.get("first_name")
+        last_name = guest_data.get("custom_last_name") or guest_data.get("last_name", "")
+        password = guest_data.get("password", frappe.generate_hash(length=12))
+        mobile_no = guest_data.get("custom_address_phone") or guest_data.get("mobile_no")
+
+        if not email or not first_name:
+            return {"error": "Missing required fields"}
+
+        if is_background:
+            log = frappe.get_doc({
+                "doctype": "App Registration Log",
+                "email": email,
+                "order": order_name,
+                "status": "Pending",
+                "retry_count": 0
+            })
+            log.insert(ignore_permissions=True)
+
+        if not frappe.db.exists("User", email):
+            user_doc = frappe.get_doc({
+                "doctype": "User",
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "new_password": password,
+                "mobile_no": mobile_no,
+                "send_welcome_email": 0,
+                "roles": [
+                    {"role": "Customer"},
+                    {"role": "Sales User"},
+                    {"role": "APP CUSTOMER"}
+                ]
+            })
+            user_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+            private_key = generate_keys(user_doc.name)["api_secret"]
+            public_key = user_doc.api_key
+        else:
+            user_doc = frappe.get_doc("User", email)
+            public_key = user_doc.api_key
+            private_key = None
+
+        existing_customer = frappe.db.exists("Customer", {"email_id": email})
+        if not existing_customer:
+            new_customer_code = generate_customer_code()
+            customer_doc = frappe.get_doc({
+                "doctype": "Customer",
+                "name": new_customer_code,
+                "custom_customer_code": new_customer_code,
+                "customer_name": f"{first_name} {last_name}",
+                "email_id": email,
+                "customer_group": "App Customer Group",
+                "territory": "All Territories",
+                "customer_type": "Individual"
+            })
+            customer_doc.insert(ignore_permissions=True)
+
+            if order_name and frappe.db.exists("Sales Order", order_name):
+                frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
+        else:
+            new_customer_code = frappe.get_value("Customer", {"email_id": email}, "name")
+
+        if is_background:
+            log.status = "Completed"
+            log.customer_code = new_customer_code
+            log.user_email = email
+            log.public_key = public_key
+            log.private_key = private_key
+            log.save(ignore_permissions=True)
+
+        return {
+            "user_email": email,
+            "public_key": public_key,
+            "private_key": private_key,
+            "customer_code": new_customer_code
+        }
+
+    except Exception as e:
+        frappe.db.rollback()
+        if is_background:
+            try:
+                log.status = "Failed"
+                log.error_log = str(e)
+                log.retry_count += 1
+                log.save(ignore_permissions=True)
+            except:
+                pass
+        frappe.log_error(frappe.get_traceback(), "create_user_and_customer error")
+        return {"error": str(e)}
+
+
+def generate_customer_code():
+    last = frappe.get_all(
+        "Customer",
+        filters={"name": ["like", "AC%"]},
+        fields=["name"],
+        order_by="name desc",
+        limit_page_length=1
+    )
+    last_code = last[0]["name"] if last else "AC00000000"
+    new_number = int(last_code[2:]) + 1
+    return f"AC{new_number:08d}"
+
+
+@frappe.whitelist(allow_guest=True)
+def check_user_registration_status(email=None):
+    if not email:
+        email = frappe.form_dict.get("email")
+    if not email:
+        return {"error": "Email is required"}
+
+    try:
+        log = frappe.get_all(
+            "App Registration Log",
+            filters={"email": email},
+            fields=["status", "customer_code", "user_email", "public_key", "private_key", "order", "creation"],
+            order_by="creation desc",
+            limit_page_length=1
+        )
+
+        if not log:
+            return {
+                "status": "Not Found",
+                "registered": False
+            }
+
+        entry = log[0]
+        return {
+            "status": entry["status"],
+            "registered": entry["status"] == "Completed",
+            "customer_code": entry["customer_code"] if entry["status"] == "Completed" else None,
+            "public_key": entry["public_key"],
+            "private_key": entry["private_key"],
+            "user_email": entry["user_email"],
+            "order": entry["order"]
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error in check_user_registration_status")
+        return {"error": str(e)}
+
+
