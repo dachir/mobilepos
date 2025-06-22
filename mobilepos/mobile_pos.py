@@ -2335,11 +2335,11 @@ def create_guest_order():
         if not cart or not customer_name:
             frappe.throw("Données de panier ou nom client manquantes.")
 
-        order_data = {"cart": cart, "customer_name": customer_name}
-        order_data.update(guest_info)
+        #order_data = {"cart": cart, "customer_name": customer_name}
+        #order_data.update(guest_info)
 
         #from path.to.create_order import create_order  # adapter à ton chemin réel
-        response = create_order(**order_data)
+        response = create_order(**request_dict)
         order_name = response.get("sales_order") or response.get("order_name")
 
         # Injection dans le Sales Order
