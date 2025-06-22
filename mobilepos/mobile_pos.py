@@ -2431,10 +2431,10 @@ def create_user_and_customer(guest_data=None, order_name=None):
                 ]
             })
             user_doc.insert(ignore_permissions=True)
-            frappe.db.commit()
+            #frappe.db.commit()
             u_doc = frappe.get_doc("User", email)
             private_key = generate_keys(u_doc.name)["api_secret"]
-            frappe.db.commit()
+            #frappe.db.commit()
             #frappe.throw(u_doc.api_key)
             public_key = u_doc.api_key
         else:
