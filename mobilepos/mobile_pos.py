@@ -2395,11 +2395,11 @@ def create_user_and_customer(guest_data=None, order_name=None):
         guest_data = request_dict.get("data", {})
 
     try:
-        email = guest_data.get("custom_email") or guest_data.get("email")
-        first_name = guest_data.get("custom_first_name") or guest_data.get("first_name")
-        last_name = guest_data.get("custom_last_name") or guest_data.get("last_name", "")
-        password = guest_data.get("password", frappe.generate_hash(length=12))
-        mobile_no = guest_data.get("custom_address_phone") or guest_data.get("mobile_no")
+        email = guest_data.get("custom_address_email") 
+        first_name = guest_data.get("custom_first_name") 
+        last_name = guest_data.get("custom_last_name")
+        password = frappe.generate_hash(length=12)
+        mobile_no = guest_data.get("custom_address_phone")
 
         if not email or not first_name:
             return {"error": "Missing required fields"}
