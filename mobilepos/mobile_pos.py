@@ -573,7 +573,7 @@ def create_order(**request_dict):
 
     
     cart_data = request_dict.get("cart")
-    warehouse = request_dict.get("set_warehouse")
+    #warehouse = request_dict.get("set_warehouse")
 
     if not cart_data or not customer:
         frappe.throw("Missing cart or customer_name")
@@ -586,7 +586,7 @@ def create_order(**request_dict):
             "doctype": "Sales Order Item",
             "item_code": i["item_code"],
             "qty": i["quantity"],   
-            "warehouse": warehouse         
+            #"warehouse": warehouse         
         })
         order_details.append(details)
 
@@ -598,10 +598,12 @@ def create_order(**request_dict):
             "delivery_date": frappe.utils.getdate(),
             "selling_price_list": selling_price_list,
             "items": order_details,
+            "set_warehouse": request_dict.get("set_warehouse"),
+            "branch": "RIYADH"
         }
     )
 
-    frappe.throw(frappe.as_json(args))
+    #frappe.throw(frappe.as_json(args))
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
