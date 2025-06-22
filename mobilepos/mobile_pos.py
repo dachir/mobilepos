@@ -2568,8 +2568,8 @@ def check_user_registration_status(email=None, mobile=None):
             "App Registration Log",
             filters=filters,
             fields=[
-                "status", "customer_code", "user_email",
-                "public_key", "private_key", "order", "creation"
+                "status", "customer_code", "email",
+                "public_key", "private_key", "sales_order", "creation"
             ],
             order_by="creation desc",
             limit_page_length=1
@@ -2588,8 +2588,8 @@ def check_user_registration_status(email=None, mobile=None):
             "customer_code": entry["customer_code"] if entry["status"] == "Completed" else None,
             "public_key": entry["public_key"],
             "private_key": entry["private_key"],
-            "user_email": entry["user_email"],
-            "order": entry["order"]
+            "user_email": entry["email"],
+            "order": entry["sales_order"]
         }
 
     except Exception as e:
