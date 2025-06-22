@@ -583,8 +583,7 @@ def create_order(**request_dict):
         details = frappe._dict({
             "doctype": "Sales Order Item",
             "item_code": i["item_code"],
-            "qty": i["quantity"],   
-            "warehouse": request_dict.get("set_warehouse")         
+            "qty": i["quantity"],           
         })
         order_details.append(details)
 
