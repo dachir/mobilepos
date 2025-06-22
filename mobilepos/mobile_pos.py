@@ -2470,6 +2470,10 @@ def create_user_and_customer(guest_data=None, order_name=None):
             log.private_key = private_key
             log.save(ignore_permissions=True)
 
+        
+        user_doc = frappe.get_doc("User", email)
+        public_key = user_doc.api_key
+
         return {
             "user_email": email,
             "public_key": public_key,
