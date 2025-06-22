@@ -571,7 +571,7 @@ def create_order(**request_dict):
     else:
         customer = "AC00000000"
 
-    frappe.throw(frappe.as_json(request_dict))
+    frappe.throw(request_dict.get("set_warehouse"))
     cart_data = request_dict.get("cart")
     warehouse = request_dict.get("set_warehouse")
 
