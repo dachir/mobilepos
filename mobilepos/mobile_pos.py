@@ -580,7 +580,6 @@ def create_order(**request_dict):
 
     order_details = []
     for i in cart_data:
-        frappe.throw(request_dict.get("set_warehouse") )
         details = frappe._dict({
             "doctype": "Sales Order Item",
             "item_code": i["item_code"],
