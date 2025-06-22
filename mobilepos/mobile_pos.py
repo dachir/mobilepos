@@ -598,6 +598,8 @@ def create_order(**request_dict):
             "items": order_details,
         }
     )
+
+    frappe.throw(args)
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
