@@ -2463,6 +2463,9 @@ def create_user_and_customer(guest_data=None, order_name=None):
             new_customer_code = frappe.get_value("Customer", {"email_id": email}, "name")
 
         if is_background:
+            user_doc = frappe.get_doc("User", email)
+            public_key = user_doc.api_key
+            
             log.status = "Completed"
             log.customer_code = new_customer_code
             log.user_email = email
@@ -2471,8 +2474,7 @@ def create_user_and_customer(guest_data=None, order_name=None):
             log.save(ignore_permissions=True)
 
         
-        user_doc = frappe.get_doc("User", email)
-        public_key = user_doc.api_key
+        
 
         return {
             "user_email": email,
