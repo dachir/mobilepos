@@ -2304,7 +2304,7 @@ def create_guest_order():
         request_dict = frappe.parse_json(request_data.decode("utf-8"))
 
         guest_info = {
-            "custom_guest_order": 1,
+            "custom_is_guest_order": 1,
             "custom_address_email": request_dict.get("email"),
             "custom_first_name": request_dict.get("first_name"),
             "custom_last_name": request_dict.get("last_name"),
