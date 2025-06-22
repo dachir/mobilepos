@@ -578,7 +578,7 @@ def create_order(**request_dict):
 
     selling_price_list = frappe.db.get_value("Customer",customer,"default_price_list")
 
-    frappe.throw(request_dict.get("set_warehouse") )
+    frappe.throw(frappe.as_json(request_dict))
 
     order_details = []
     for i in cart_data:
