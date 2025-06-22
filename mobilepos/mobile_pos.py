@@ -612,7 +612,7 @@ def create_order(**request_dict):
     except frappe.DoesNotExistError:
             return None
         
-    return str("OK")
+    return sale
 
 
 def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False, id=0, rate=0):
@@ -2344,7 +2344,7 @@ def create_guest_order():
 
         #from path.to.create_order import create_order  # adapter à ton chemin réel
         response = create_order(**request_dict)
-        order_name = response.get("sales_order") or response.get("order_name")
+        order_name = response.get("name") 
 
         # Injection dans le Sales Order
         for fieldname, value in guest_info.items():
