@@ -571,9 +571,10 @@ def create_order(**request_dict):
     else:
         customer = "AC00000000"
 
-    frappe.throw(request_dict.get("set_warehouse"))
+    
     cart_data = request_dict.get("cart")
     warehouse = request_dict.get("set_warehouse")
+    frappe.throw(warehouse)
 
     if not cart_data or not customer:
         frappe.throw("Missing cart or customer_name")
