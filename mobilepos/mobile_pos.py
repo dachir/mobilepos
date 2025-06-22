@@ -584,7 +584,7 @@ def create_order(**request_dict):
             "doctype": "Sales Order Item",
             "item_code": i["item_code"],
             "qty": i["quantity"],   
-            "warehouse": request_dict.get("set_warehouse")         
+            #"warehouse": request_dict.get("set_warehouse")         
         })
         order_details.append(details)
 
@@ -599,7 +599,7 @@ def create_order(**request_dict):
         }
     )
 
-    frappe.throw(frappe.as_json(args))
+    #frappe.throw(frappe.as_json(args))
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
