@@ -558,13 +558,20 @@ def get_daily_report(limit=10, offset=0):
 
 
 @frappe.whitelist()
-def create_order():
-    # Get the request data
-    request_data = frappe.request.data
-    request_data_str = request_data.decode('utf-8')
-    request_dict = frappe.parse_json(request_data_str)
-    cart_data = request_dict.get('cart')
-    customer = request_dict.get('customer_name')
+def create_order(**request_dict):
+    # Si aucun argument passé (appel API direct), lire depuis le corps de la requête
+    if not request_dict:
+        raw_data = frappe.request.data
+        if raw_data:
+            request_dict = frappe.parse_json(raw_data.decode("utf-8"))
+        else:
+            frappe.throw("No order data provided.")
+
+    cart_data = request_dict.get("cart")
+    customer = request_dict.get("customer_name")
+
+    if not cart_data or not customer:
+        frappe.throw("Missing cart or customer_name")
 
     selling_price_list = frappe.db.get_value("Customer",customer,"default_price_list")
 
@@ -2303,8 +2310,6 @@ def create_guest_order():
             "custom_address_phone": request_dict.get("address_phone"),
             "custom_address_fax": request_dict.get("address_fax")
         }
-
-        frappe.throw(str(guest_info))
 
         email = guest_info.get("custom_email")
         if not email:
