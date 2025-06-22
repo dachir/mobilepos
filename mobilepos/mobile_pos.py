@@ -603,12 +603,12 @@ def create_order(**request_dict):
         }
     )
 
-    #frappe.throw(frappe.as_json(args))
+    frappe.throw(frappe.as_json(args))
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
         sale.insert()
-        sale.submit()
+        #sale.submit()
     except frappe.DoesNotExistError:
             return None
         
