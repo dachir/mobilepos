@@ -2304,19 +2304,19 @@ def create_guest_order():
         request_dict = frappe.parse_json(request_data.decode("utf-8"))
 
         guest_info = {
-            "custom_is_guest_order": 1,
-            "custom_email": request_dict.get("email"),
+            "custom_guest_order": 1,
+            "custom_address_email": request_dict.get("email"),
             "custom_first_name": request_dict.get("first_name"),
             "custom_last_name": request_dict.get("last_name"),
-            "custom_address_line1": request_dict.get("address_line1"),
-            "custom_address_line2": request_dict.get("address_line2"),
-            "custom_address_in_arabic": request_dict.get("address_in_arabic"),
+            "custom_address_line_01": request_dict.get("address_line1"),
+            "custom_address_line_02": request_dict.get("address_line2"),
+            "custom_address_line_in_arabic": request_dict.get("address_in_arabic"),
             "custom_address_city": request_dict.get("address_city"),
             "custom_address_county": request_dict.get("address_county"),
             "custom_address_state": request_dict.get("address_state"),
             "custom_address_country": request_dict.get("address_country"),
-            "custom_address_pincode": request_dict.get("address_pincode"),
-            "custom_address_email_id": request_dict.get("address_email_id"),
+            "custom_address_pin_code": request_dict.get("address_pincode"),
+            #"custom_address_email_id": request_dict.get("email"),
             "custom_address_phone": request_dict.get("address_phone"),
             "custom_address_fax": request_dict.get("address_fax")
         }
