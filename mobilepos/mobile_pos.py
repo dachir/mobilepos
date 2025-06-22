@@ -599,7 +599,7 @@ def create_order(**request_dict):
         }
     )
 
-    frappe.throw(args)
+    frappe.throw(frappe.as_json(args))
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
