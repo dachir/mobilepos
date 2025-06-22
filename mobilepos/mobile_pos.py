@@ -559,13 +559,17 @@ def get_daily_report(limit=10, offset=0):
 
 @frappe.whitelist()
 def create_order(**request_dict):
+    customer = ""
     # Si aucun argument passé (appel API direct), lire depuis le corps de la requête
     if not request_dict:
         raw_data = frappe.request.data
         if raw_data:
             request_dict = frappe.parse_json(raw_data.decode("utf-8"))
+            customer = request_dict.get('customer_name')
         else:
             frappe.throw("No order data provided.")
+    else:
+        customer = "AC00000000"
 
     cart_data = request_dict.get("cart")
     customer = request_dict.get("customer_name")
@@ -587,7 +591,7 @@ def create_order(**request_dict):
     args = frappe._dict(
         {
             "doctype": "Sales Order",
-            "customer": request_dict.get('customer_name'),
+            "customer": customer,
             "transaction_date": frappe.utils.getdate(),
             "delivery_date": frappe.utils.getdate(),
             "selling_price_list": selling_price_list,
