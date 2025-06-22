@@ -2365,7 +2365,7 @@ def create_guest_order():
             timeout=300,
             guest_data=guest_info,
             order_name=order_name,
-            publish_progress=True,
+            #publish_progress=True,
         )
 
         frappe.msgprint(
