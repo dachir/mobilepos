@@ -2351,14 +2351,29 @@ def create_guest_order():
             if value:
                 frappe.db.set_value("Sales Order", order_name, fieldname, value)
 
-        enqueue(
-            create_user_and_customer,
+        #enqueue(
+        #    create_user_and_customer,
+        #    queue="default",
+        #    timeout=300,
+        #    is_async=True,
+        #    guest_data=guest_info,
+        #    order_name=order_name
+        #)
+        frappe.enqueue(
+            method=create_user_and_customer,
             queue="default",
             timeout=300,
-            is_async=True,
             guest_data=guest_info,
-            order_name=order_name
+            order_name=order_name,
+            publish_progress=True,
         )
+
+        frappe.msgprint(
+            _("Account creation is queued. It may take a few minutes"),
+            alert=True,
+            indicator="blue",
+        )
+
 
         return {
             "success": True,
