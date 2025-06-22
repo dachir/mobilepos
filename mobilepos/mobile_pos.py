@@ -2304,6 +2304,8 @@ def create_guest_order():
             "custom_address_fax": request_dict.get("address_fax")
         }
 
+        frappe.throw(str(guest_info))
+
         email = guest_info.get("custom_email")
         if not email:
             frappe.throw("Email is required for guest order.")
