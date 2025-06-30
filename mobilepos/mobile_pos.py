@@ -566,6 +566,12 @@ def create_order(**request_dict):
         if raw_data:
             request_dict = frappe.parse_json(raw_data.decode("utf-8"))
             customer = request_dict.get('customer_name')
+            transaction_id = request_dict.get("transaction_id")
+            payment_method = request_dict.get("payment_method")
+            invoice_id = request_dict.get("invoice_id")
+            payment_gateway = request_dict.get("payment_gateway")
+            paid_at = request_dict.get("paid_at")
+            payment_status = request_dict.get("payment_status")
         else:
             frappe.throw("No order data provided.")
     else:
@@ -602,6 +608,15 @@ def create_order(**request_dict):
             "branch": "RIYADH"
         }
     )
+    if transaction_id != None:
+        args.update({
+            "transaction_id": transaction_id,
+            "payment_method": payment_method,
+            "invoice_id": invoice_id,
+            "payment_gateway": payment_gateway,
+            "paid_at": paid_at,
+            "payment_status": payment_status,
+        })
 
     #frappe.throw(frappe.as_json(args))
     try:
