@@ -2475,6 +2475,8 @@ def create_user_and_customer(guest_data=None, order_name=None):
 
             if order_name and frappe.db.exists("Sales Order", order_name):
                 frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
+                customer_name = f"{first_name} {last_name}"
+                frappe.db.set_value("Sales Order", order_name, "customer_name", customer_name)
         else:
             new_customer_code = frappe.get_value("Customer", {"email_id": email}, "name")
 
