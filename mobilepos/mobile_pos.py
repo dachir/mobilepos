@@ -565,14 +565,15 @@ def create_order(**request_dict):
         raw_data = frappe.request.data
         if raw_data:
             request_dict = frappe.parse_json(raw_data.decode("utf-8"))
-            customer = request_dict.get('customer_name')
+            #customer = request_dict.get('customer')
         else:
             frappe.throw("No order data provided.")
-    else:
-        customer = "AC00000000"
+    #else:
+    #    customer = "AC00000000"
 
     
     cart_data = request_dict.get("cart")
+    customer = request_dict.get("customer") or "AC00000000"
     #warehouse = request_dict.get("set_warehouse")
     transaction_id = request_dict.get("transaction_id")
     payment_method = request_dict.get("payment_method")
