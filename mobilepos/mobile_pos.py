@@ -566,12 +566,6 @@ def create_order(**request_dict):
         if raw_data:
             request_dict = frappe.parse_json(raw_data.decode("utf-8"))
             customer = request_dict.get('customer_name')
-            transaction_id = request_dict.get("transaction_id")
-            payment_method = request_dict.get("payment_method")
-            invoice_id = request_dict.get("invoice_id")
-            payment_gateway = request_dict.get("payment_gateway")
-            paid_at = request_dict.get("paid_at")
-            payment_status = request_dict.get("payment_status")
         else:
             frappe.throw("No order data provided.")
     else:
@@ -580,6 +574,12 @@ def create_order(**request_dict):
     
     cart_data = request_dict.get("cart")
     #warehouse = request_dict.get("set_warehouse")
+    transaction_id = request_dict.get("transaction_id")
+    payment_method = request_dict.get("payment_method")
+    invoice_id = request_dict.get("invoice_id")
+    payment_gateway = request_dict.get("payment_gateway")
+    paid_at = request_dict.get("paid_at")
+    payment_status = request_dict.get("payment_status")
 
     if not cart_data or not customer:
         frappe.throw("Missing cart or customer_name")
