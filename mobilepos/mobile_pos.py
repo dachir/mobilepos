@@ -582,6 +582,9 @@ def create_order(**request_dict):
     paid_at = request_dict.get("paid_at")
     payment_status = request_dict.get("payment_status")
 
+    taxes_and_charges = request_dict.get("taxes_and_charges")
+    taxes = request_dict.get("taxes")
+
     if not cart_data or not customer:
         frappe.throw("Missing cart or customer_name")
 
@@ -606,7 +609,9 @@ def create_order(**request_dict):
             "selling_price_list": selling_price_list,
             "items": order_details,
             "set_warehouse": request_dict.get("set_warehouse"),
-            "branch": "RIYADH"
+            "branch": "RIYADH",
+            "taxes_and_charges": taxes_and_charges,
+            "taxes": taxes
         }
     )
     if transaction_id != None:
