@@ -386,8 +386,8 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
                 FROM (
                     SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
-                    FROM tabShop s  CROSS JOIN tabCustomer c 
-                    WHERE s.name = %(shop)s AND c.name = %(name)s
+                    FROM tabShop s  CROSS JOIN tabCustomer c INNER JOIN `tabSales Order` so ON so.customer = c.name AND so.custom_shop = s.name
+                    WHERE s.name = %(shop)s AND c.name = %(name)s AND so.status IN ('To Deliver and Bill', 'To Bill', 'To Deliver') AND so.docstatus = 1
                 ) AS t1
                 """,{"shop":shop, "name":name}, as_dict=1
             )
@@ -2339,7 +2339,9 @@ def create_guest_order():
             "custom_address_pin_code": request_dict.get("address_pincode"),
             #"custom_address_email_id": request_dict.get("email"),
             "custom_address_phone": request_dict.get("address_phone"),
-            "custom_address_fax": request_dict.get("address_fax")
+            "custom_address_fax": request_dict.get("address_fax"),   
+            "custom_longitude": request_dict.get("custom_longitude"),
+            "custom_latitude": request_dict.get("custom_latitude")
         }
 
         email = guest_info.get("custom_address_email")
@@ -2421,17 +2423,34 @@ def create_user_and_customer(guest_data=None, order_name=None):
         last_name = ""
         password = frappe.generate_hash(length=12)
         mobile_no = ""
+        address_data = ""
 
         if is_background:
             email = guest_data.get("custom_address_email")
             first_name = guest_data.get("custom_first_name")
             last_name = guest_data.get("custom_last_name")
             mobile_no = guest_data.get("custom_address_phone")
+            address_data = {
+                "address_title": f"{first_name} {last_name}".strip(),
+                "address_type": "Billing",
+                "address_line1": guest_data.get("custom_address_line_01"),
+                "address_line2": guest_data.get("custom_address_line_02"),
+                "address_in_arabic": guest_data.get("custom_address_line_in_arabic"),
+                "city": guest_data.get("custom_address_city"),
+                "state": guest_data.get("custom_address_state"),
+                "pincode": guest_data.get("custom_address_pin_code"),
+                "country": guest_data.get("custom_address_country"),
+                "phone": mobile_no,
+                "email_id": email,
+                "custom_longitude": guest_data.get("custom_longitude"),
+                "custom_latitude": guest_data.get("custom_latitude"),
+            }
         else:
             email = guest_data.get("email")
             first_name = guest_data.get("first_name")
             last_name = guest_data.get("last_name")
             mobile_no = guest_data.get("mobile_no")
+            address_data = guest_data.get("address_data", {})
 
         if not email or not first_name:
             return {"error": "Missing required fields"}
@@ -2488,6 +2507,13 @@ def create_user_and_customer(guest_data=None, order_name=None):
                 "customer_type": "Individual"
             })
             customer_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+            frappe.msgprint("Customer created successfully.")
+
+            if address_data:
+                create_address_2(address_data, customer_doc.name)
+
+            frappe.db.commit()
 
             if order_name and frappe.db.exists("Sales Order", order_name):
                 frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
