@@ -1701,16 +1701,17 @@ def get_closest_location(latitude, longitude):
 @frappe.whitelist()
 def get_app_defaut_price_list():
     use_default_price_list = frappe.db.get_single_value("Shop Settings", "use_default_price_list")
-    price_list = frappe.db.get_single_value("Shop Settings", "price_list")
-    item_prices = frappe.db.sql(
-        """
-        SELECT DISTINCT ip.item_code, ip.price_list_rate, i.image
-        FROM `tabItem Price` ip INNER JOIN tabItem i ON i.name = ip.item_code
-        WHERE ip.price_list = %(price_list)s
-        """, {"price_list": price_list}, as_dict=1
-    )    
+    if bool(use_default_price_list):
+        price_list = frappe.db.get_single_value("Shop Settings", "price_list")
+        item_prices = frappe.db.sql(
+            """
+            SELECT DISTINCT ip.item_code, ip.price_list_rate, i.image
+            FROM `tabItem Price` ip INNER JOIN tabItem i ON i.name = ip.item_code
+            WHERE ip.price_list = %(price_list)s
+            """, {"price_list": price_list}, as_dict=1
+        )    
         
-    return item_prices or []
+        return item_prices or []
 
 
 @frappe.whitelist()
