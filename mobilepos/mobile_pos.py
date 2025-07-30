@@ -382,10 +382,10 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                 t1.name,CASE WHEN t1.name <> t1.customer_name THEN CONCAT(t1.name,' ',t1.customer_name) ELSE t1.customer_name END AS customer_name,
                 t1.customer_name as description, 
                 t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
-                t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
+                t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.selling_price_list, t1.tax_id,
                 t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
                 FROM (
-                    SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
+                    SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person, so.selling_price_list 
                     FROM tabShop s  CROSS JOIN tabCustomer c INNER JOIN `tabSales Order` so ON so.customer = c.name AND so.custom_shop = s.name
                     WHERE s.name = %(shop)s AND c.name = %(name)s AND so.status IN ('To Deliver and Bill', 'To Bill', 'To Deliver') AND so.docstatus = 1
                 ) AS t1
