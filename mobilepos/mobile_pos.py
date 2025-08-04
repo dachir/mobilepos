@@ -1659,7 +1659,7 @@ def get_branch_name_from_geofence(latitude, longitude):
                         FROM `tabPrice List` pl 
                         INNER JOIN `tabItem Price` ip ON ip.price_list = pl.name
                             INNER JOIN tabItem i ON i.name = ip.item_code
-                        WHERE pl.custom_branch = %(branch)s AND ip.price_list LIKE '%APP CUSTOMERS%'
+                        WHERE pl.custom_branch = %(branch)s AND ip.price_list LIKE '%%APP CUSTOMERS%%'
                         """, {"branch": branch}, as_dict=1
                     )
                     return item_prices or []
