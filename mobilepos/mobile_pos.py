@@ -1570,7 +1570,7 @@ def get_orders_by_shop(shop):
                 i.is_free_item, o.customer, o.custom_shop, o.name as order_id, o.net_total, o.customer_name, i.name AS order_item_id,
                 o.payment_gateway
             FROM `tabSales Order` o INNER JOIN `tabSales Order Item` i ON i.parent = o.name INNER JOIN `tabShop Product` p ON p.product_code = i.item_code
-            WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s
+            WHERE o.docstatus = 1 AND i.delivered_qty < i.qty AND o.custom_shop = %(shop)s AND o.status NOT IN ('Closed', 'Completed')
             ) AS t
         """, {"shop": shop}, as_dict=1
     )
