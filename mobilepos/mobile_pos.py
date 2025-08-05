@@ -609,7 +609,7 @@ def create_order(**request_dict):
             "selling_price_list": selling_price_list,
             "items": order_details,
             "set_warehouse": request_dict.get("set_warehouse"),
-            "branch": "RIYADH",
+            "branch": "HAIL",
             "taxes_and_charges": taxes_and_charges,
             "taxes": taxes
         }
@@ -1679,7 +1679,7 @@ def get_branch_name_by_location(latitude, longitude):
         # Fetch geofence data from ERPNext
         branches = frappe.get_all('Branch', fields=['name', 'custom_geofence'])
 
-        point = Point(latitude, longitude)
+        point = Point(longitude, latitude) #A Uniformiser
 
         for b in branches:
             if not b.custom_geofence:
