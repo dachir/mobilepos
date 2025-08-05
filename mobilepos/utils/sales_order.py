@@ -1,5 +1,5 @@
 import frappe
-from mobile_pos import get_branch_name_by_location
+from mobilepos.mobile_pos import get_branch_name_by_location
 
 
 def create_order(doc, method):
