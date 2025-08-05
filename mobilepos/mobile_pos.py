@@ -1670,6 +1670,42 @@ def get_branch_name_from_geofence(latitude, longitude):
 
 
 @frappe.whitelist()
+def get_branch_name_by_location(latitude, longitude):
+    geofence_price_list = frappe.db.get_single_value("Shop Settings", "geofence_price_list")
+    if bool(geofence_price_list):
+        if not latitude or not longitude:
+            frappe.throw("Latitude and longitude are required.")
+
+        # Fetch geofence data from ERPNext
+        branches = frappe.get_all('Branch', fields=['name', 'custom_geofence'])
+
+        point = Point(latitude, longitude)
+
+        for b in branches:
+            if not b.custom_geofence:
+                continue  # Ignore les branches sans géofence
+            # The geofence_coordinates should be stored as a list of tuples, e.g., [(41.6500, 27.5400), (41.6600, 27.5500), ...]
+            geofence = json.loads(b.custom_geofence)
+            geometry = geofence.get("geometry")
+            coords=[]
+            if not isinstance(geometry, dict):
+                coords = geofence["features"][0]["geometry"]["coordinates"][0]
+            else:
+                coords = geofence["geometry"]["coordinates"][0]
+            #print(str(coords))
+
+            # Create the polygon for the current geofence
+            polygon = Polygon(coords)
+
+            # Check if the point is inside the polygon
+            if polygon.contains(point):
+                #return b['name']  # Return the name of the city (e.g., 'Hail')
+                return b['name']
+            
+    return None
+
+
+@frappe.whitelist()
 def get_closest_location(latitude, longitude):
     closest_location_price_list = frappe.db.get_single_value("Shop Settings", "closest_location_price_list")
     if bool(closest_location_price_list):
