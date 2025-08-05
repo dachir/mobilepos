@@ -1620,6 +1620,7 @@ def update_item():
     })
     frappe.db.commit()
 
+@frappe.whitelist()
 def get_branch_name_from_geofence(latitude, longitude):
     geofence_price_list = frappe.db.get_single_value("Shop Settings", "geofence_price_list")
     if bool(geofence_price_list):
