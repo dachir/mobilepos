@@ -113,8 +113,10 @@ doc_events = {
 #		"on_trash": "method"
 #	}
     "Sales Order":{
-        "after_save": "mobilepos.mobile_pos.select_shop_on_submit"
+        "after_save": "mobilepos.mobile_pos.select_shop_on_submit",
+        "validate": " mobilepos.utils.sales_order.create_order",
     },
+
 }
 
 # Scheduled Tasks
