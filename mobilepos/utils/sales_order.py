@@ -9,7 +9,7 @@ def create_order(doc, method):
         if branch:
             doc.branch = branch
             doc.territory = branch
-            pl_name = frappe.db.get_value('Price List', { "custom_branch": branch }, 'name')
+            pl_name = frappe.db.get_value('Price List', { "custom_branch": branch, "custom_is_mobile_price_list": 1 }, 'name')
             if pl_name:
                 doc.selling_price_list =  pl_name
             else:
