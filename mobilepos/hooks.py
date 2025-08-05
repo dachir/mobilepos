@@ -114,7 +114,7 @@ doc_events = {
 #	}
     "Sales Order":{
         "after_save": "mobilepos.mobile_pos.select_shop_on_submit",
-        "validate": " mobilepos.utils.sales_order.create_order",
+        "validate": "mobilepos.utils.sales_order.create_order",
     },
 
 }
