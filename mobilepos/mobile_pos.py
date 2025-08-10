@@ -370,7 +370,7 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
                             SELECT c.*
                             FROM tabCustomer c
                             WHERE c.name = %(name)s
-                                OR c.customer_name LIKE CONCAT('%', %(name)s, '%')
+                                OR c.customer_name LIKE CONCAT('%%', %(name)s, '%%')
                         ),
                         last_so_pl AS (
                         SELECT so.customer,
