@@ -2274,6 +2274,7 @@ def create_invoice():
             "shop": parsed["shop"],
             "items": invoice_details,
             "payment_type": parsed["payment_type"],
+            "due_date": getdate(),
         })
 
         sales_team = frappe._dict({
