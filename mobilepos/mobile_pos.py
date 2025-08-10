@@ -361,19 +361,66 @@ def get_documents(doctype=None,list_name=None,shop=None, limit=10, offset=0,name
             else:
                 data = frappe.db.sql(
                     """
-                    SELECT (SELECT COUNT(*) + 1 FROM tabCustomer t2 WHERE t2.name <= t1.name) AS id,
-                    t1.name,CASE WHEN t1.name <> t1.customer_name THEN CONCAT(t1.name,' ',t1.customer_name) ELSE t1.customer_name END AS customer_name,
-                    t1.customer_name as description, 
-                    t1.mobile_no as mobile,t1.email_id as email,t1.image, 0 as balance, t1.creation as created_at, t1.modified as updated_at,
-                    t1.territory, t1.warehouse, t1.company, t1.branch, t1.currency, t1.sales_person, t1.default_price_list as selling_price_list, t1.tax_id,
-                    t1.custom_b2c, t1.tax_id, t1.custom_other_buying_id, t1.nfc_only, t1.signature
-                    FROM (
-                        SELECT c.*, s.warehouse, s.company, s.branch, s.currency, s.sales_person 
-                        FROM tabShop s INNER JOIN `tabShop Territory` t ON t.parent = s.name INNER JOIN tabCustomer c ON t.territory = c.territory 
-                        WHERE s.name = %(shop)s and CONCAT(c.name,' ',lower(c.customer_name)) LIKE CONCAT('%%',lower(%(name)s),'%%')
-                    ) AS t1
-                    LIMIT %(limit)s OFFSET %(offset)s
-                    """,{"shop":shop, "name":name, "limit":int(limit),"offset":int(offset)}, as_dict=1
+                        WITH s AS (
+                            SELECT name, warehouse, company, branch, currency, sales_person
+                            FROM tabShop
+                            WHERE name = %(shop)s
+                        ),
+                        candidates AS (
+                            SELECT c.*
+                            FROM tabCustomer c
+                            WHERE c.name = %(name)s
+                                OR c.customer_name LIKE CONCAT('%', %(name)s, '%')
+                        ),
+                        last_so_pl AS (
+                        SELECT so.customer,
+                                so.custom_shop,
+                                so.selling_price_list,
+                                ROW_NUMBER() OVER (PARTITION BY so.customer, so.custom_shop
+                                                    ORDER BY so.transaction_date DESC, so.name DESC) AS rn
+                        FROM `tabSales Order` so
+                        WHERE so.custom_shop = %(shop)s
+                            AND so.docstatus = 1
+                            AND so.status IN ('To Deliver and Bill', 'To Bill', 'To Deliver')
+                        )
+                        SELECT
+                        ROW_NUMBER() OVER (ORDER BY c.name) AS id,
+                        c.name,
+                        CASE WHEN c.name <> c.customer_name
+                            THEN CONCAT(c.name, ' ', c.customer_name)
+                            ELSE c.customer_name END AS customer_name,
+                        c.customer_name AS description,
+                        c.mobile_no  AS mobile,
+                        c.email_id   AS email,
+                        c.image,
+                        0 AS balance,
+                        c.creation   AS created_at,
+                        c.modified   AS updated_at,
+                        c.territory,
+                        s.warehouse, s.company, s.branch, s.currency, s.sales_person,
+                        COALESCE(pl.selling_price_list, c.default_price_list) AS selling_price_list,
+                        c.tax_id,
+                        c.custom_b2c,
+                        c.custom_other_buying_id,
+                        c.nfc_only,
+                        c.signature
+                        FROM candidates c
+                        CROSS JOIN s
+                        LEFT JOIN last_so_pl pl
+                        ON pl.customer = c.name AND pl.custom_shop = s.name AND pl.rn = 1
+                        WHERE EXISTS (
+                                SELECT 1 FROM `tabShop Territory` t
+                                WHERE t.parent = s.name AND t.territory = c.territory
+                            )
+                        OR EXISTS (
+                                SELECT 1 FROM `tabSales Order` so
+                                WHERE so.customer = c.name
+                                AND so.custom_shop = s.name
+                                AND so.docstatus = 1
+                                AND so.status IN ('To Deliver and Bill','To Bill','To Deliver')
+                            )
+                        ORDER BY c.name;
+                    """,{"shop":shop, "name":name}, as_dict=1
                 )
         else:
             data = frappe.db.sql(
@@ -2274,7 +2321,6 @@ def create_invoice():
             "shop": parsed["shop"],
             "items": invoice_details,
             "payment_type": parsed["payment_type"],
-            "due_date": getdate(),
         })
 
         sales_team = frappe._dict({
