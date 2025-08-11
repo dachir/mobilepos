@@ -269,11 +269,11 @@ def get_invoices(name):
 
 
 @frappe.whitelist()
-def get_last_invoice_within_5_minutes():
+def get_last_invoice_within_5_minutes(shop, customer):
     # Read POST data
-    data = frappe.local.form_dict
-    shop = data.get("shop")
-    customer = data.get("customer")
+    #data = frappe.local.form_dict
+    #shop = data.get("shop")
+    #customer = data.get("customer")
 
     # 1. Compute the threshold datetime (now − 4 minutes)
     threshold = add_to_date(now_datetime(), minutes=-5)
@@ -1868,7 +1868,7 @@ def create_address():
             "city": address_data.get("city"),
             "state": address_data.get("state"),
             "pincode": address_data.get("pincode"),
-            "country": address_data.get("country"),
+            "country": "Saudi Arabia", #address_data.get("country"),
             "phone": address_data.get("phone"),
             "custom_area": address_data.get("custom_area"),
             "custom_longitude": address_data.get("custom_longitude"),
