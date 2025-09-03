@@ -2746,3 +2746,100 @@ def check_user_registration_status(email=None, mobile=None):
 
 
 
+@frappe.whitelist()
+def payment_customer_address(customer: str):
+    """
+    Retourne l'adresse pour un client au format attendu par la classe Dart Address:
+    {
+      "name","address_type","address_line1","address_line2",
+      "city","phone","email_id","country","pincode",
+      // bonus non requis par la classe:
+      "source","display"
+    }
+    Logique: 1) première facture payée (shipping > billing) ; 2) fallback (primaire > Billing > plus ancienne)
+    """
+    if not customer:
+        frappe.throw("Paramètre 'customer' requis.")
+    if not frappe.db.exists("Customer", customer):
+        return {}
+
+    # 1) Trouver l'adresse candidate (invoice payée -> fallback)
+    row = frappe.db.sql("""
+        SELECT t.addr, t.source
+        FROM (
+          (
+            SELECT
+              COALESCE(NULLIF(si.shipping_address_name, ''), si.customer_address) AS addr,
+              CASE
+                WHEN si.shipping_address_name IS NOT NULL AND si.shipping_address_name <> ''
+                  THEN CONCAT('invoice:', si.name, ':shipping')
+                ELSE CONCAT('invoice:', si.name, ':billing')
+              END AS source,
+              1 AS priority,
+              si.posting_date AS sort_dt
+            FROM `tabSales Invoice` si
+            WHERE si.customer = %(customer)s
+              AND si.docstatus = 1
+              AND si.is_return = 0
+              AND si.status IN ('Paid','Paid and Closed')
+              AND (
+                   (si.shipping_address_name IS NOT NULL AND si.shipping_address_name <> '')
+                OR (si.customer_address      IS NOT NULL AND si.customer_address      <> '')
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM `tabAddress` a
+                WHERE a.name = COALESCE(NULLIF(si.shipping_address_name,''), si.customer_address)
+                  AND COALESCE(a.disabled, 0) = 0
+              )
+            ORDER BY si.posting_date ASC, si.name ASC
+            LIMIT 1
+          )
+          UNION ALL
+          (
+            SELECT a.name AS addr,
+                   'fallback:customer_billing_or_primary' AS source,
+                   2 AS priority,
+                   a.creation AS sort_dt
+            FROM `tabAddress` a
+            JOIN `tabDynamic Link` dl
+              ON dl.parent = a.name AND dl.parenttype = 'Address'
+            WHERE dl.link_doctype = 'Customer'
+              AND dl.link_name = %(customer)s
+              AND COALESCE(a.disabled, 0) = 0
+            ORDER BY a.is_primary_address DESC,
+                     (a.address_type = 'Billing') DESC,
+                     a.creation ASC
+            LIMIT 1
+          )
+        ) AS t
+        ORDER BY t.priority ASC, t.sort_dt ASC
+        LIMIT 1
+    """, {"customer": customer}, as_dict=True)
+
+    if not row:
+        return {}
+
+    addr_name = row[0]["addr"]
+
+    # 2) Charger uniquement les champs utiles à ta classe Dart
+    fields = [
+        "name",
+        "address_type",
+        "address_line1",
+        "address_line2",
+        "city",
+        "phone",
+        "email_id",
+        "country",
+        "pincode",
+    ]
+    addr = frappe.db.get_value("Address", addr_name, fields, as_dict=True) or {}
+
+    if not addr:
+        return {}
+
+    return addr
+
+
+
