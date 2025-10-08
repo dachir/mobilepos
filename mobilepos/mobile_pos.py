@@ -27,8 +27,9 @@ def get_balance(customer, company):
     return flt(credit_limit) - flt(outstanding_amt)
 
 #def get_promotion(warehouse, item, customer_group, qty):
+@frappe.whitelist()
 def get_promotion(warehouse, item, customer, qty):
-    customer_group = frappe.db.get_value("Customer",customer, "customer_group")
+    #customer_group = frappe.db.get_value("Customer",customer, "customer_group")
     data = []
 
     #data = frappe.db.sql(
