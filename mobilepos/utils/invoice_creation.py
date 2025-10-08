@@ -37,63 +37,72 @@ def get_pending_amount(shop_doc):
     return pending_amount
 
 def get_promotion(warehouse, item, customer, qty):
-    customer_group = frappe.db.get_value("Customer",customer, "customer_group")
+    #customer_group = frappe.db.get_value("Customer",customer, "customer_group")
     data = []
 
-    data = frappe.db.sql(
-        """
-        SELECT *, (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
-        FROM(
-            SELECT DISTINCT ri.item_code, r.name,r.price_or_product_discount,
-                CASE WHEN r.same_item THEN ri.item_code ELSE r.free_item END as free_item,
-                min_qty,
-                CASE WHEN r.price_or_product_discount = 'Product' THEN free_qty ELSE 0 END  as free_qty, 
-                CASE WHEN r.price_or_product_discount = 'Price' THEN  rate ELSE 0 END as rate,
-                CASE WHEN max_qty = 0 THEN 999999999999 ELSE max_qty END as max_qty
-            FROM `tabPricing Rule` r INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
-                INNER JOIN (SELECT w.name
-                            FROM tabWarehouse w INNER JOIN (SELECT rgt FROM tabWarehouse WHERE name = %(warehouse)s) t
-                            ON w.lft < t.rgt AND t.rgt < w.rgt) u ON u.name = r.warehouse
-            WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND CURDATE() BETWEEN r.valid_from AND IFNULL(r.valid_upto, '3099-12-31')
-            AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) ) AS a
-        WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
-        """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
-    )
+    campaign = None
 
-    if data == []:
-            data = frappe.db.sql(
-                """
-                SELECT *, (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
-                FROM(
-                    SELECT DISTINCT ri.item_code, r.name,r.price_or_product_discount,
-                        CASE WHEN r.same_item THEN ri.item_code ELSE r.free_item END as free_item,
-                        min_qty,
-                        CASE WHEN r.price_or_product_discount = 'Product' THEN free_qty ELSE 0 END  as free_qty, 
-                        CASE WHEN r.price_or_product_discount = 'Price' THEN  rate ELSE 0 END as rate,
-                        CASE WHEN max_qty = 0 THEN 999999999999 ELSE max_qty END as max_qty
-                    FROM `tabPricing Rule` r INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
-                    WHERE ri.item_code = %(item)s AND r.disable = 0 and r.selling = 1 AND CURDATE() BETWEEN r.valid_from AND IFNULL(r.valid_upto, '3099-12-31')
-                    AND (r.customer_group = %(customer_group)s OR r.customer = %(customer)s) 
-                    AND (
-                        (length(r.warehouse) = 0 OR r.warehouse IS NULL)
-                        OR EXISTS (
-                            SELECT 1
-                            FROM tabWarehouse w
-                            INNER JOIN (
-                                SELECT lft, rgt 
-                                FROM tabWarehouse 
-                                WHERE name = %(warehouse)s
-                            ) t ON w.lft >= t.lft AND w.rgt <= t.rgt
-                            WHERE w.name = r.warehouse
-                        )
-                    )
-                    
-                    ) AS a
-                WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
-                """,{"warehouse": warehouse, "item": item, "customer":customer, "customer_group":customer_group, "qty": qty}, as_dict = 1
+    sql = """
+            WITH cur AS (
+            SELECT lft, rgt FROM `tabWarehouse` WHERE name = %(warehouse)s
+            ),
+            ancestors AS (  -- lignée: racine -> ... -> courant (inclus)
+            SELECT w.name
+            FROM `tabWarehouse` w
+            JOIN cur ON w.lft <= cur.lft AND w.rgt >= cur.rgt
             )
+            SELECT
+                a.*,
+                (%(qty)s DIV a.min_qty) * a.free_qty AS total_free_qty
+            FROM (
+                SELECT DISTINCT
+                    ri.item_code,
+                    r.name,
+                    r.price_or_product_discount,
+                    CASE WHEN COALESCE(r.same_item,0)=1 THEN ri.item_code ELSE r.free_item END AS free_item,
+                    r.min_qty,
+                    CASE WHEN r.price_or_product_discount = 'Product' THEN r.free_qty ELSE 0 END  AS free_qty,
+                    CASE WHEN r.price_or_product_discount = 'Price'   THEN r.rate     ELSE 0 END  AS rate,
+                    CASE WHEN COALESCE(r.max_qty,0) = 0 THEN 999999999999 ELSE r.max_qty END      AS max_qty
+                FROM `tabPricing Rule` r
+                INNER JOIN `tabPricing Rule Item Code` ri ON ri.parent = r.name
+                INNER JOIN `tabCustomer` c ON c.name = %(customer)s
+                WHERE
+                    ri.item_code = %(item)s
+                    AND COALESCE(r.disable,0) = 0
+                    AND COALESCE(r.selling,0) = 1
+                    AND (r.valid_from IS NULL OR CURDATE() >= r.valid_from)
+                    AND (r.valid_upto IS NULL OR CURDATE() <= r.valid_upto)
 
-    #if data:
+                    -- 💡 Filtre "applicable_for"
+                    AND (
+                    COALESCE(r.applicable_for, '') = ''  -- Rien sélectionné : pas de contrainte
+                    OR (
+                        (r.applicable_for = 'Customer'       AND r.customer       =  c.name)
+                        OR (r.applicable_for = 'Customer Group' AND r.customer_group =  c.customer_group)
+                        OR (r.applicable_for = 'Territory'      AND r.territory       =  c.territory)
+                        OR (r.applicable_for = 'Sales Partner'  AND r.sales_partner   =  c.default_sales_partner)
+                        OR (r.applicable_for = 'Campaign'       AND r.campaign        =  %(campaign)s)
+                    )
+                    )
+
+                    -- 🏭 Entrepôt optionnel : vide = pas de contrainte ; sinon doit être dans la lignée
+                    AND (
+                    r.warehouse IS NULL OR r.warehouse = ''
+                    OR r.warehouse IN (SELECT name FROM ancestors)
+                    )
+            ) AS a
+            WHERE %(qty)s BETWEEN a.min_qty AND a.max_qty
+        """
+
+    data = frappe.db.sql(sql, {
+        "warehouse": warehouse,
+        "item": item,
+        "customer": customer,
+        "qty": qty,
+        "campaign": campaign
+    }, as_dict=True)
+
     return data
     #else:
     #    return []
