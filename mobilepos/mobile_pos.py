@@ -2503,6 +2503,7 @@ def create_guest_order():
 
         email = guest_info.get("custom_address_email")
         if not email:
+            frappe.log_error("Guest Order Creation", "Guest order creation failed: Email is missing")
             frappe.throw("Email is required for guest order.")
 
         existing_log = frappe.get_all(
@@ -2511,13 +2512,15 @@ def create_guest_order():
             limit_page_length=1
         )
         if existing_log:
-            frappe.throw("Un compte a déjà été créé pour cet utilisateur. Veuillez vous connecter.")
+            frappe.log_error("Guest Order Creation", f"Guest order creation failed: Account already exists for email {email}")
+            frappe.throw(f"Guest order creation failed: Account already exists for email {email}")
 
         cart = request_dict.get("cart")
         customer_name = email or guest_info["custom_first_name"] + " " + guest_info["custom_last_name"]
 
         if not cart or not customer_name:
-            frappe.throw("Données de panier ou nom client manquantes.")
+            frappe.log_error("Guest Order Creation", "Guest order creation failed: Cart data or customer name is missing")
+            frappe.throw("Guest order creation failed: Cart data or customer name is missing")
 
         #order_data = {"cart": cart, "customer_name": customer_name}
         #order_data.update(guest_info)
@@ -2539,6 +2542,7 @@ def create_guest_order():
         #    guest_data=guest_info,
         #    order_name=order_name
         #)
+        frappe.log_error("Guest Order Creation", f"Guest Order Creation: Enqueuing account creation for order {order_name} with guest info {guest_info}")
         frappe.enqueue(
             method=create_user_and_customer,
             queue="default",
