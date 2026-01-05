@@ -2117,16 +2117,19 @@ def login():
     
     try:
         login_id = data.get("email")
+        frappe.log_error("Login Attempt", f"Login attempt for {login_id}")
         password = data.get("password")
 
         # Determine if the login_id is an email or phone
         if is_valid_email(login_id):
             email = frappe.db.get_value("User", {"email": login_id}, "name")
             if not email:
+                frappe.log_error(f"Login failed for email: {login_id}", "Login Error")
                 frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
         else:
             email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
             if not email:
+                frappe.log_error(f"Login failed for phone number: {login_id}", "Login Error")
                 frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
 
         pwd = frappe.db.get_single_value('Abar Settings', 'app_user_password')
@@ -2644,6 +2647,7 @@ def create_user_and_customer(guest_data=None, order_name=None):
             })
             user_doc.insert(ignore_permissions=True)
             #frappe.db.commit()
+            frappe.log_error("User Creation", f"User created successfully for email {email}")
             u_doc = frappe.get_doc("User", email)
             private_key = generate_keys(u_doc.name)["api_secret"]
             #frappe.db.commit()
