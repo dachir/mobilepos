@@ -2106,6 +2106,31 @@ def is_valid_email(email):
     email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     return re.match(email_regex, email) is not None
 
+def normalize_login_email(login_id: str, mobile_domain: str = "mobile.com") -> str:
+    """
+    Normalise le login en email.
+    - Email => inchangé
+    - Numéro (avec +, espaces, tirets) => "+9660501038693@mobile.com"
+    """
+    if not login_id:
+        return ""
+
+    s = login_id.strip()
+
+    # Déjà un email
+    if "@" in s:
+        return s.lower()
+
+    # Nettoyage léger: enlève espaces / tirets / parenthèses
+    cleaned = re.sub(r"[\s\-\(\)]", "", s)
+
+    # Si ça ressemble à un numéro (optionnel + puis chiffres)
+    if re.fullmatch(r"\+?\d{6,20}", cleaned):
+        return f"{cleaned}@{mobile_domain}".lower()
+
+    # Sinon: on retourne tel quel (ou tu peux décider de lever une erreur)
+    return s.lower()
+
 @frappe.whitelist()
 def login():
     request_data = frappe.request.data
@@ -2117,6 +2142,7 @@ def login():
     
     try:
         login_id = data.get("email")
+        login_id = normalize_login_email(login_id) 
         frappe.log_error("Login Attempt", f"Login attempt for {login_id}")
         password = data.get("password")
 
