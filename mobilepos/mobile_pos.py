@@ -750,7 +750,8 @@ def create_order(**request_dict):
         sale.insert(ignore_permissions=True)
         #sale.submit()
     except frappe.DoesNotExistError:
-            return None
+        frappe.log_error(frappe.get_traceback(), "Create Order Error")
+        return None
         
     return sale
 
