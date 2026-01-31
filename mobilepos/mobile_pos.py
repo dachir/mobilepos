@@ -2536,8 +2536,8 @@ def create_guest_order():
             #"custom_address_email_id": request_dict.get("email"),
             "custom_address_phone": request_dict.get("address_phone"),
             "custom_address_fax": request_dict.get("address_fax"),   
-            "custom_longitude": request_dict.get("custom_longitude"),
-            "custom_latitude": request_dict.get("custom_latitude")
+            "custom_longitude": request_dict.get("coustome_longitude"),
+            "custom_latitude": request_dict.get("coustome_latitude")
         }
 
         email = guest_info.get("custom_address_email")
@@ -2958,6 +2958,23 @@ def payment_customer_address(customer: str):
         return {}
 
     return addr
+
+
+
+
+
+@frappe.whitelist()
+def test_order(args):
+    try:
+        sale = frappe.get_doc(args)
+        #sale.ignore_pricing_rule = 1
+        sale.insert(ignore_permissions=True)
+        #sale.submit()
+    except frappe.DoesNotExistError:
+        frappe.log_error(frappe.get_traceback(), "Create Order Error")
+        return None
+        
+    return sale
 
 
 
