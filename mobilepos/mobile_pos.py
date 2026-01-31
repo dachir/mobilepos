@@ -673,7 +673,7 @@ def get_daily_report(limit=10, offset=0):
     })
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def create_order(**request_dict):
     customer = ""
     # Si aucun argument passé (appel API direct), lire depuis le corps de la requête
