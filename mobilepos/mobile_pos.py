@@ -2685,10 +2685,15 @@ def create_user_and_customer(guest_data=None, order_name=None):
             #frappe.db.commit()
             frappe.log_error("User Creation", f"User created successfully for email {email}")
             u_doc = frappe.get_doc("User", email)
-            private_key = generate_keys(u_doc.name)["api_secret"]
-            #frappe.db.commit()
-            #frappe.throw(u_doc.api_key)
-            public_key = u_doc.api_key
+            old_user = frappe.session.user
+            try:
+                frappe.set_user("Administrator")  # ou un user technique System Manager
+                keys = generate_keys(u_doc.name)
+            finally:
+                frappe.set_user(old_user)
+
+            private_key = keys["api_secret"]
+            public_key = frappe.db.get_value("User", u_doc.name, "api_key")
         else:
             user_doc = frappe.get_doc("User", email)
             public_key = user_doc.api_key
