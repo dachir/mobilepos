@@ -748,7 +748,9 @@ def create_order(**request_dict):
 
     #frappe.throw(frappe.as_json(args))
     frappe.log_error(frappe.as_json(args), "Create Order Data")
+    old_user = frappe.session.user
     try:
+        frappe.set_user("Administrator")
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
         sale.insert(ignore_permissions=True)
@@ -757,6 +759,8 @@ def create_order(**request_dict):
         frappe.log_error(frappe.get_traceback(), "Create Order Insert Failed")
         frappe.throw("Error creating order.")
         return None
+    finally:
+        frappe.set_user(old_user)
         
     return sale
 
