@@ -2518,6 +2518,8 @@ def create_guest_order():
         request_data = frappe.request.data
         request_dict = frappe.parse_json(request_data.decode("utf-8"))
 
+        frappe.log_error("Guest Order Creation", f"Received guest order creation request: {request_dict}")
+
         guest_info = {
             "custom_is_guest_order": 1,
             "custom_address_email": request_dict.get("email"),
