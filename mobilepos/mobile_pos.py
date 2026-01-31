@@ -702,7 +702,9 @@ def create_order(**request_dict):
     taxes = request_dict.get("taxes")
 
     if not cart_data or not customer:
-        frappe.throw("Missing cart or customer_name")
+        frappe.log_error("Missing cart or customer_name", "Create Order Error")
+        return None
+        #frappe.throw("Missing cart or customer_name")
 
     selling_price_list = frappe.db.get_value("Customer",customer,"default_price_list")
 
@@ -741,6 +743,7 @@ def create_order(**request_dict):
         })
 
     #frappe.throw(frappe.as_json(args))
+    frappe.log_error(frappe.as_json(args), "Create Order Data")
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
