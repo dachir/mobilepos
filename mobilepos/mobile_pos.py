@@ -753,8 +753,8 @@ def create_order(**request_dict):
         #sale.ignore_pricing_rule = 1
         sale.insert(ignore_permissions=True)
         #sale.submit()
-    except frappe.DoesNotExistError:
-        frappe.log_error(frappe.get_traceback(), "Create Order Error")
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Create Order Insert Failed")
         frappe.throw("Error creating order.")
         return None
         
