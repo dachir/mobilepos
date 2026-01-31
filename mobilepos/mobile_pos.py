@@ -754,7 +754,12 @@ def create_order(**request_dict):
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
         sale.insert(ignore_permissions=True)
-        #sale.submit()
+        frappe.db.commit()
+        # ✅ preuve immédiate
+        if not frappe.db.exists("Sales Order", sale.name):
+            frappe.log_error(f"Not found after insert: {sale.name}", "Create Order Debug")
+            frappe.throw("Sales Order not found after insert (rollback).")
+
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Create Order Insert Failed")
         frappe.throw("Error creating order.")
