@@ -16,3 +16,4 @@ def create_order(doc, method):
                 frappe.throw("No Price List for this branch regarding this customer!")
         else:
             frappe.throw("We are not serving in this area!")
+            
