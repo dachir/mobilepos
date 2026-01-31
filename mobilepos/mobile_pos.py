@@ -758,7 +758,7 @@ def create_order(**request_dict):
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Create Order Insert Failed")
         frappe.throw("Error creating order.")
-        return None
+        raise
     finally:
         frappe.set_user(old_user)
         
