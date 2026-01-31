@@ -770,6 +770,7 @@ def create_order(**request_dict):
     return sale
 
 
+
 def get_item_batches(warehouse, item_code, promo_data, branch, max_qty, is_free_item = False, id=0, rate=0):
     """
     Get item batches based on the given parameters.
