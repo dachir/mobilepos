@@ -755,6 +755,7 @@ def create_order(**request_dict):
         #sale.submit()
     except frappe.DoesNotExistError:
         frappe.log_error(frappe.get_traceback(), "Create Order Error")
+        frappe.throw("Error creating order.")
         return None
         
     return sale
@@ -2567,6 +2568,10 @@ def create_guest_order():
         #from path.to.create_order import create_order  # adapter à ton chemin réel
         response = create_order(**request_dict)
         order_name = response.get("name") 
+
+        if not order_name:
+            frappe.log_error("Guest Order Creation", "Guest order creation failed: Order creation did not return an order name")
+            frappe.throw("Order creation failed.")
 
         # Injection dans le Sales Order
         for fieldname, value in guest_info.items():
