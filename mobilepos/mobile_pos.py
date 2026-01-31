@@ -747,7 +747,7 @@ def create_order(**request_dict):
     try:
         sale = frappe.get_doc(args)
         #sale.ignore_pricing_rule = 1
-        sale.insert()
+        sale.insert(ignore_permissions=True)
         #sale.submit()
     except frappe.DoesNotExistError:
             return None
