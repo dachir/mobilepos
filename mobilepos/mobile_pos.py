@@ -697,6 +697,8 @@ def create_order(**request_dict):
     payment_gateway = request_dict.get("payment_gateway")
     paid_at = request_dict.get("paid_at")
     payment_status = request_dict.get("payment_status")
+    custom_latitude = request_dict.get("coustome_latitude")
+    custom_longitude = request_dict.get("coustome_longitude")
 
     taxes_and_charges = request_dict.get("taxes_and_charges")
     taxes = request_dict.get("taxes")
@@ -729,7 +731,9 @@ def create_order(**request_dict):
             "set_warehouse": request_dict.get("set_warehouse"),
             "branch": "HAIL",
             "taxes_and_charges": taxes_and_charges,
-            "taxes": taxes
+            "taxes": taxes,
+            "custom_latitude": custom_latitude,
+            "custom_longitude": custom_longitude
         }
     )
     if transaction_id != None:
