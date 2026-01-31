@@ -1996,7 +1996,7 @@ def create_address_2(address_data, customer_name):
         })
         
         # Insert the document into the database
-        address_doc.insert()
+        address_doc.insert(ignore_permissions=True)
         frappe.db.commit()
 
         code = 100 + int(address_doc.custom_code)
