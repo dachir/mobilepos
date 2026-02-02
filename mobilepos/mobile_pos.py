@@ -1809,6 +1809,7 @@ def get_branch_name_by_location(latitude, longitude):
     geofence_price_list = frappe.db.get_single_value("Shop Settings", "geofence_price_list")
     if bool(geofence_price_list):
         if not latitude or not longitude:
+            frappe.log_error("Latitude and longitude are required.", "Geofence Error")
             frappe.throw("Latitude and longitude are required.")
 
         # Fetch geofence data from ERPNext
@@ -1837,6 +1838,7 @@ def get_branch_name_by_location(latitude, longitude):
                 #return b['name']  # Return the name of the city (e.g., 'Hail')
                 return b['name']
             
+    frappe.log_error("No branch found for the given location.", "Geofence Error")
     return None
 
 
@@ -1845,6 +1847,7 @@ def get_closest_location(latitude, longitude):
     closest_location_price_list = frappe.db.get_single_value("Shop Settings", "closest_location_price_list")
     if bool(closest_location_price_list):
         if not latitude or not longitude:
+            frappe.log_error("Latitude and longitude are required.", "Closest Location Error")
             frappe.throw("Latitude and longitude are required.")
 
         item_prices = frappe.db.sql(
@@ -1866,6 +1869,8 @@ def get_closest_location(latitude, longitude):
                 INNER JOIN tabItem i ON i.name = ip.item_code
             """, {"latitude": latitude, "longitude": longitude}, as_dict=1
         )
+        if not item_prices:
+            frappe.log_error("No closest location found for the given coordinates.", "Closest Location Error")
             
         return item_prices or []
 
@@ -1881,9 +1886,15 @@ def get_app_defaut_price_list():
             FROM `tabItem Price` ip INNER JOIN tabItem i ON i.name = ip.item_code
             WHERE ip.price_list = %(price_list)s
             """, {"price_list": price_list}, as_dict=1
-        )    
-        
+        ) 
+
         return item_prices or []
+
+    else:
+        frappe.log_error("Default price list is not enabled.", "Default Price List Error")
+        return []  
+        
+    
 
 
 @frappe.whitelist()
