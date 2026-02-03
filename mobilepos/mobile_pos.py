@@ -2161,7 +2161,7 @@ def normalize_login_email(login_id: str, mobile_domain: str = "mobile.com") -> s
     # Sinon: on retourne tel quel (ou tu peux décider de lever une erreur)
     return s.lower()
 
-@frappe.whitelist()
+@frappe.whitelist( allow_guest=True)  # Permet l'accès aux utilisateurs non connectés
 def login():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
