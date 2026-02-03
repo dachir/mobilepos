@@ -2176,6 +2176,8 @@ def login():
     data = request_dict.get("data", {})
     
     try:
+        frappe.log_error("Login Data", str(data))
+        # Extracting login credentials from the input
         login_id = data.get("email")
         login_id = normalize_login_email(login_id) 
         frappe.log_error("Login Attempt", f"Login attempt for {login_id}")
