@@ -2219,9 +2219,11 @@ def login():
         cust_doc = frappe.get_doc("Customer",{"email_id":email})
 
         # Step 4: Create the Customer Using the New Customer Code
+        frappe.set_user("Administrator")  # ou un user technique System Manager
         addr_list = frappe.db.get_list("Address",
             fields=["name", "address_line1", "address_line2", "address_in_arabic", "city", "county", "state", "country","pincode", "email_id", "phone", "fax"],
             filters={"name":["LIKE", cust_doc.name +"%"]})
+        frappe.set_user(old_user)
 
         # Return all keys and customer information
         return {
