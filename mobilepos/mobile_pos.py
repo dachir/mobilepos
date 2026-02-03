@@ -2203,7 +2203,14 @@ def login():
             return {"error": "Login Issue", "details": "Your credential does not exist"}
 
         # Step 1: Generate API Secret (Private Key) for the User
-        private_key = generate_keys(email)["api_secret"]
+        #private_key = generate_keys(email)["api_secret"]
+
+        old_user = frappe.session.user
+        try:
+            frappe.set_user("Administrator")  # ou un user technique System Manager
+            private_key = generate_keys(email)["api_secret"]
+        finally:
+            frappe.set_user(old_user)
         
         # Step 2: Get the User Info
         user_doc = frappe.get_doc("User",email)
