@@ -2188,6 +2188,7 @@ def login():
                 frappe.log_error(f"Login failed for email: {login_id}", "Login Error")
                 frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
         else:
+            login_id = login_id.split("@")[0]
             email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
             if not email:
                 frappe.log_error(f"Login failed for phone number: {login_id}", "Login Error")
