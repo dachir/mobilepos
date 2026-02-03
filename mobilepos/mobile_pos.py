@@ -2206,7 +2206,6 @@ def login():
         #private_key = generate_keys(email)["api_secret"]
 
         old_user = frappe.session.user
-        
         try:
             frappe.set_user("Administrator")  # ou un user technique System Manager
             private_key = generate_keys(email)["api_secret"]
