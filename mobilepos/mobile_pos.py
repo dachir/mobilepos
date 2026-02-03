@@ -2133,7 +2133,12 @@ def zzz_create_user_and_customer():
 
 def is_valid_email(email):
     """Validate if the input is a valid email address."""
-    email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    #email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    if not email:
+        return False
+    
+    email = email.strip().lower()
+    email_regex = r"^\+?[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
     return re.match(email_regex, email) is not None
 
 def normalize_login_email(login_id: str, mobile_domain: str = "mobile.com") -> str:
