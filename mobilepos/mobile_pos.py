@@ -2227,7 +2227,7 @@ def login():
         }
 
     except Exception as e:
-        frappe.log_error(f"Error Login: {str(e)}", "User and Customer Creation")
+        frappe.log_error(frappe.get_traceback(), "User and Customer Creation")
         return {"error": "An error occurred during the login process", "details": str(e)}
 
 
