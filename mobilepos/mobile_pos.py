@@ -1815,7 +1815,7 @@ def get_branch_name_by_location(latitude, longitude):
         # Fetch geofence data from ERPNext
         branches = frappe.get_all('Branch', fields=['name', 'custom_geofence'])
 
-        point = Point(longitude, latitude) #A Uniformiser
+        point = Point(latitude, longitude) #A Uniformiser
 
         for b in branches:
             if not b.custom_geofence:
