@@ -12,6 +12,7 @@ from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
 from shapely.geometry import Point, Polygon
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry as map_pe
 from frappe.utils.background_jobs import enqueue
+from frappe.contacts.doctype.address.address import get_address_display
 #from frappe.website.doctype.personal_data_deletion_request.personal_data_deletion_request import 
 
 
@@ -2771,6 +2772,14 @@ def create_user_and_customer(guest_data=None, order_name=None):
                     frappe.db.set_value("Sales Order", order_name, "customer_address", new_address.name)
                 customer_name = f"{first_name} {last_name}"
                 frappe.db.set_value("Sales Order", order_name, "customer_name", customer_name)
+
+                # refresh display text
+                frappe.db.set_value(
+                    "Sales Order",
+                    order_name,
+                    "address_display",
+                    get_address_display(new_address.name),
+                )
 
         else:
             new_customer_code = frappe.get_value("Customer", {"email_id": email}, "name")
