@@ -2171,10 +2171,11 @@ def normalize_login_email(login_id: str, mobile_domain: str = "mobile.com") -> s
 def login():
     request_data = frappe.request.data
     request_data_str = request_data.decode('utf-8')
-    request_dict = frappe.parse_json(request_data_str)
+    request_dict = frappe.parse_json(request_data_str)  or {}
+    data = request_dict.get("data") or request_dict  # ✅ fallback pour supporter les deux formats : { "data": { ... } } ou directement { ... }
 
      # Accessing the inner data dictionary
-    data = request_dict.get("data", {})
+    #data = request_dict.get("data", {})
     
     try:
         frappe.log_error("Login Data", str(data))
@@ -2213,6 +2214,8 @@ def login():
         #        frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
 
         pwd = frappe.db.get_single_value('Abar Settings', 'app_user_password')
+
+        frappe.log_error("LOGIN_DEBUG", f"raw={login_id_raw} norm={login_id} is_phone={is_phone_login}")
 
         #if not check_password(email, password, delete_tracker_cache=False):
         if password != pwd:
@@ -2848,7 +2851,7 @@ def generate_customer_code():
 
 
 @frappe.whitelist(allow_guest=True)
-def check_user_registration_status(email=None):
+def zzz_check_user_registration_status(email=None):
     if not email:
         email = frappe.form_dict.get("email")
     if not email:
@@ -2897,7 +2900,7 @@ def check_user_registration_status(email=None, mobile=None):
     if email:
         filters["email"] = email
     if mobile:
-        filters["custom_address_phone"] = mobile
+        filters["mobile"] = mobile
 
     try:
         # Cherche le log correspondant à l'email ou au numéro
