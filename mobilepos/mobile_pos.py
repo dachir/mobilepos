@@ -2179,23 +2179,38 @@ def login():
     try:
         frappe.log_error("Login Data", str(data))
         # Extracting login credentials from the input
-        login_id = data.get("email")
-        login_id = normalize_login_email(login_id) 
+        login_id_raw = (data.get("email") or "").strip()
+        login_id = normalize_login_email(login_id_raw) 
         frappe.log_error("Login Attempt", f"Login attempt for {login_id}")
         password = data.get("password")
 
-        # Determine if the login_id is an email or phone
-        if is_valid_email(login_id):
-            email = frappe.db.get_value("User", {"email": login_id}, "name")
+        # ✅ Si on a fabriqué un email téléphone => traiter comme téléphone
+        is_phone_login = login_id.endswith("@mobile.com")
+
+        if is_phone_login:
+            phone = login_id.split("@")[0]  # garde le +243...
+            email = frappe.db.get_value("User", {"mobile_no": phone}, "name")
             if not email:
-                frappe.log_error(f"Login failed for email: {login_id}", "Login Error")
-                frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
+                frappe.throw(frappe._(f"The phone number {phone} does not exist."), frappe.AuthenticationError)
+
         else:
-            login_id = login_id.split("@")[0]
-            email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
+            # vrai email
+            email = frappe.db.get_value("User", {"email": login_id.lower()}, "name")
             if not email:
-                frappe.log_error(f"Login failed for phone number: {login_id}", "Login Error")
-                frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
+                frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
+
+        # Determine if the login_id is an email or phone
+        #if is_valid_email(login_id):
+        #    email = frappe.db.get_value("User", {"email": login_id}, "name")
+        #    if not email:
+        #        frappe.log_error(f"Login failed for email: {login_id}", "Login Error")
+        #        frappe.throw(frappe._(f"The email {login_id} does not exist."), frappe.AuthenticationError)
+        #else:
+        #    login_id = login_id.split("@")[0]
+        #    email = frappe.db.get_value("User", {"mobile_no": login_id}, "name")
+        #    if not email:
+        #        frappe.log_error(f"Login failed for phone number: {login_id}", "Login Error")
+        #        frappe.throw(frappe._(f"The phone number {login_id} does not exist."), frappe.AuthenticationError)
 
         pwd = frappe.db.get_single_value('Abar Settings', 'app_user_password')
 
