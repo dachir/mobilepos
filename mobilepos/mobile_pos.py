@@ -1900,9 +1900,9 @@ def get_app_defaut_price_list():
 
 @frappe.whitelist()
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
-    #swap_var = latitude
-    #latitude = longitude
-    #longitude = swap_var
+    swap_var = latitude
+    latitude = longitude
+    longitude = swap_var
     item_prices = (
         get_branch_name_from_geofence(latitude, longitude)
         or get_closest_location(latitude, longitude)
