@@ -2192,10 +2192,16 @@ def login():
         is_phone_login = login_id.endswith("@mobile.com")
 
         if is_phone_login:
-            phone = login_id.split("@")[0]  # garde le +243...
-            email = frappe.db.get_value("User", {"mobile_no": phone}, "name")
+            phone_raw = login_id.split("@")[0]
+            phone_plus, phone_digits = normalize_phone_for_lookup(phone_raw)
+
+            email = (
+                frappe.db.get_value("User", {"mobile_no": phone_plus}, "name")
+                or frappe.db.get_value("User", {"mobile_no": phone_digits}, "name")
+            )
             if not email:
-                frappe.throw(frappe._(f"The phone number {phone} does not exist."), frappe.AuthenticationError)
+                frappe.throw(frappe._(f"The phone number {phone_raw} does not exist."), frappe.AuthenticationError)
+
 
         else:
             # vrai email
@@ -2731,7 +2737,7 @@ def create_user_and_customer(guest_data=None, order_name=None):
         # -------------------------
         # 3) Récupérer le dernier log (si existe)
         # -------------------------
-        last_log = get_latest_app_reg_log(email=email, mobile=mobile_no) if 'get_latest_app_reg_log' in globals() else None
+        last_log = get_latest_app_reg_log(email=email) if 'get_latest_app_reg_log' in globals() else None
         # fallback si la helper n'existe pas / n'est pas fiable
         if not last_log:
             rows = frappe.get_all(
@@ -3085,6 +3091,12 @@ def payment_customer_address(customer: str):
     return addr
 
 
+def normalize_phone_for_lookup(phone: str) -> tuple[str, str]:
+    p = (phone or "").strip()
+    digits = re.sub(r"\D", "", p)  # enlève tout sauf chiffres
+    with_plus = f"+{digits}" if digits and not p.startswith("+") else (p if p.startswith("+") else f"+{digits}")
+    no_plus = digits
+    return with_plus, no_plus
 
 
 
