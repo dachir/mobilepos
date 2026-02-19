@@ -12,7 +12,7 @@ from erpnext.stock.doctype.batch.batch import UnableToSelectBatchError
 from shapely.geometry import Point, Polygon
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry as map_pe
 from frappe.utils.background_jobs import enqueue
-from mobilepos.mobilepos.utils.mobile_app import only_digits, get_latest_app_reg_log, ensure_user, ensure_customer
+from mobilepos.utils.mobile_app import only_digits, get_latest_app_reg_log, ensure_user, ensure_customer
 from frappe.contacts.doctype.address.address import get_address_display
 #from frappe.website.doctype.personal_data_deletion_request.personal_data_deletion_request import 
 
@@ -1905,7 +1905,7 @@ def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
 
     if swapped:
         frappe.logger().info(f"Coordinates swapped ({reason}): lat={lat}, lon={lon}")
-        
+
     item_prices = (
         get_branch_name_from_geofence(lat, lon)
         or get_closest_location(lat, lon)
