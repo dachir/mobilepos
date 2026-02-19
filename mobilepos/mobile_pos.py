@@ -3156,8 +3156,8 @@ def normalize_ksa_coordinates(lat, lon, strict=False):
         return lon_f, lat_f, True
 
     # KSA bounding box (approx, good enough for validation + swap detection)
-    KSA_LAT_MIN, KSA_LAT_MAX = 16.0, 32.8
-    KSA_LON_MIN, KSA_LON_MAX = 34.0, 56.5
+    KSA_LON_MIN, KSA_LON_MAX = 16.0, 32.8
+    KSA_LAT_MIN, KSA_LAT_MAX = 34.0, 56.5
 
     def in_ksa(a, b):
         return (KSA_LAT_MIN <= a <= KSA_LAT_MAX) and (KSA_LON_MIN <= b <= KSA_LON_MAX)
