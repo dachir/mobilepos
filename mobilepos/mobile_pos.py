@@ -1901,10 +1901,10 @@ def get_app_defaut_price_list():
 
 @frappe.whitelist()
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
-    lat, lon, swapped, reason = normalize_ksa_coordinates(latitude, longitude)
+    lat, lon, swapped = normalize_ksa_coordinates(latitude, longitude, strict=False)
 
     if swapped:
-        frappe.logger().info(f"Coordinates swapped ({reason}): lat={lat}, lon={lon}")
+        frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization")
 
     item_prices = (
         get_branch_name_from_geofence(lat, lon)
@@ -2607,6 +2607,18 @@ def create_guest_order():
             "custom_latitude": data.get("coustome_latitude") or 0,
         }
 
+        lat, lon, swapped = normalize_ksa_coordinates(
+            data.get("coustome_latitude"),
+            data.get("coustome_longitude"),
+            strict=False
+        )
+
+        guest_info["custom_latitude"] = lat
+        guest_info["custom_longitude"] = lon
+
+        if swapped:
+            frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization for Guest Order")
+
         email = (guest_info.get("custom_address_email") or "").strip()
         if not email:
             frappe.log_error("Guest Order Creation", "Guest order creation failed: Email is missing")
@@ -3115,59 +3127,52 @@ def test_order(args):
 
 
 
-def normalize_ksa_coordinates(latitude, longitude, *, do_swap=True):
+def normalize_ksa_coordinates(lat, lon, strict=False):
     """
-    Normalise des coordonnées (lat, lon) pour l'Arabie Saoudite.
-    - Convertit en float
-    - Détecte inversion probable selon bornes KSA (plus robuste)
-    - Swape si nécessaire (si do_swap=True)
-    - Valide les bornes globales (lat<=90, lon<=180)
-
-    Returns:
-        (lat, lon, swapped, reason)
+    Normalise (lat, lon) pour l'Arabie Saoudite.
+    - Règle 1: si abs(lat) > 90 et abs(lon) <= 90 => swap
+    - Règle 2: bounding box KSA: lat [16, 32.8], lon [34, 56.5]
+      si (lat,lon) hors KSA mais (lon,lat) dans KSA => swap
+    - strict=True => throw si ni (lat,lon) ni (lon,lat) ne match KSA
     """
-    lat = flt(latitude)
-    lon = flt(longitude)
 
-    # Validation globale Terre
-    if abs(lat) > 90 or abs(lon) > 180:
-        # Tentative de correction si inversion "mathématiquement impossible" côté lat
-        if do_swap and abs(lat) > 90 and abs(lon) <= 90:
-            lat, lon = lon, lat
-            swapped = True
-            reason = "swap_abs_lat_gt_90"
-        else:
-            raise ValueError(f"Invalid coordinates: lat={lat}, lon={lon}")
-    else:
-        swapped = False
-        reason = "ok"
+    def to_float(x):
+        try:
+            return float(x)
+        except Exception:
+            return None
 
-    # Bornes approximatives Arabie Saoudite (à ajuster si tu veux être plus strict)
-    KSA_LAT_MIN = 15
-    KSA_LAT_MAX = 35
-    KSA_LON_MIN = 30
-    KSA_LON_MAX = 60
+    lat_f = to_float(lat)
+    lon_f = to_float(lon)
 
-    lat_in_ksa = (KSA_LAT_MIN <= lat <= KSA_LAT_MAX)
-    lon_in_ksa = (KSA_LON_MIN <= lon <= KSA_LON_MAX)
+    if lat_f is None or lon_f is None:
+        if strict:
+            #frappe.throw("Invalid coordinates (lat/lon must be numeric).")
+            frappe.log_error(f"Invalid coordinates: lat={lat}, lon={lon}", "Coordinate Normalization Error")
+        return lat, lon, False
 
-    # Détection inversion plausible pour KSA:
-    # - la "latitude" sort des bornes KSA
-    # - la "longitude" ressemble à une latitude KSA
-    # - et l'autre (vraie longitude) ressemble à une longitude KSA
-    if do_swap and (not lat_in_ksa):
-        lon_looks_like_ksa_lat = (KSA_LAT_MIN <= lon <= KSA_LAT_MAX)
-        lat_looks_like_ksa_lon = (KSA_LON_MIN <= lat <= KSA_LON_MAX)
+    # Rule 1: physically impossible latitude
+    if abs(lat_f) > 90 and abs(lon_f) <= 90:
+        return lon_f, lat_f, True
 
-        if lon_looks_like_ksa_lat and lat_looks_like_ksa_lon:
-            lat, lon = lon, lat
-            swapped = True
-            reason = "swap_ksa_range_detection"
+    # KSA bounding box (approx, good enough for validation + swap detection)
+    KSA_LAT_MIN, KSA_LAT_MAX = 16.0, 32.8
+    KSA_LON_MIN, KSA_LON_MAX = 34.0, 56.5
 
-    # Re-validation globale après swap
-    if abs(lat) > 90 or abs(lon) > 180:
-        raise ValueError(f"Invalid coordinates after normalization: lat={lat}, lon={lon}")
+    def in_ksa(a, b):
+        return (KSA_LAT_MIN <= a <= KSA_LAT_MAX) and (KSA_LON_MIN <= b <= KSA_LON_MAX)
 
-    return lat, lon, swapped, reason
+    # Rule 2: smart swap based on KSA box
+    if in_ksa(lat_f, lon_f):
+        return lat_f, lon_f, False
+
+    if in_ksa(lon_f, lat_f):
+        return lon_f, lat_f, True
+
+    if strict:
+        #frappe.throw(f"Coordinates out of KSA range. lat={lat_f}, lon={lon_f}")
+        frappe.log_error(f"Coordinates out of KSA range: lat={lat_f}, lon={lon_f}", "Coordinate Normalization Error")
+    return lat_f, lon_f, False
+
 
 
