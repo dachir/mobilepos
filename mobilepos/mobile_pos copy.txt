@@ -1901,14 +1901,12 @@ def get_app_defaut_price_list():
 
 @frappe.whitelist()
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
-    lat, lon, swapped, reason = normalize_ksa_coordinates(latitude, longitude)
-
-    if swapped:
-        frappe.logger().info(f"Coordinates swapped ({reason}): lat={lat}, lon={lon}")
-        
+    swap_var = latitude
+    latitude = longitude
+    longitude = swap_var
     item_prices = (
-        get_branch_name_from_geofence(lat, lon)
-        or get_closest_location(lat, lon)
+        get_branch_name_from_geofence(latitude, longitude)
+        or get_closest_location(latitude, longitude)
         or get_app_defaut_price_list()
     )
 
@@ -2577,94 +2575,100 @@ def on_submit(doc, method):
 def create_guest_order():
     try:
         request_data = frappe.request.data
-        request_dict = frappe.parse_json(request_data.decode("utf-8")) or {}
-        data = request_dict.get("data") if isinstance(request_dict.get("data"), dict) else request_dict
+        request_dict = frappe.parse_json(request_data.decode("utf-8"))
 
-        frappe.log_error("Guest Order Creation", f"Received guest order creation request: {data}")
+        frappe.log_error("Guest Order Creation", f"Received guest order creation request: {request_dict}")
 
         guest_info = {
             "custom_is_guest_order": 1,
-            "custom_address_email": data.get("email"),
-            "custom_first_name": data.get("first_name"),
-            "custom_last_name": data.get("last_name"),
-            "custom_address_line_01": data.get("address_line1"),
-            "custom_address_line_02": data.get("address_line2"),
-            "custom_address_line_in_arabic": data.get("address_in_arabic"),
-            "custom_address_city": data.get("address_city"),
-            "custom_address_county": data.get("address_county"),
-            "custom_address_state": data.get("address_state"),
-            "custom_address_country": data.get("address_country"),
-            "custom_address_pin_code": data.get("address_pincode"),
-            "custom_address_phone": data.get("address_phone"),
-            "custom_address_fax": data.get("address_fax"),
-            "custom_longitude": data.get("coustome_longitude") or 0,
-            "custom_latitude": data.get("coustome_latitude") or 0,
+            "custom_address_email": request_dict.get("email"),
+            "custom_first_name": request_dict.get("first_name"),
+            "custom_last_name": request_dict.get("last_name"),
+            "custom_address_line_01": request_dict.get("address_line1"),
+            "custom_address_line_02": request_dict.get("address_line2"),
+            "custom_address_line_in_arabic": request_dict.get("address_in_arabic"),
+            "custom_address_city": request_dict.get("address_city"),
+            "custom_address_county": request_dict.get("address_county"),
+            "custom_address_state": request_dict.get("address_state"),
+            "custom_address_country": request_dict.get("address_country"),
+            "custom_address_pin_code": request_dict.get("address_pincode"),
+            #"custom_address_email_id": request_dict.get("email"),
+            "custom_address_phone": request_dict.get("address_phone"),
+            "custom_address_fax": request_dict.get("address_fax"),   
+            "custom_longitude": request_dict.get("coustome_longitude"),
+            "custom_latitude": request_dict.get("coustome_latitude")
         }
 
-        email = (guest_info.get("custom_address_email") or "").strip()
+        email = guest_info.get("custom_address_email")
         if not email:
             frappe.log_error("Guest Order Creation", "Guest order creation failed: Email is missing")
             frappe.throw("Email is required for guest order.")
 
-        cart = data.get("cart")
-        if not cart:
-            frappe.throw("Guest order creation failed: Cart data is missing")
-
-        # ✅ Idempotence: éviter de créer 10 SO si l’app retente
-        threshold = add_to_date(now_datetime(), hours=-24)
-        existing_so = frappe.get_all(
-            "Sales Order",
-            filters={
-                "custom_is_guest_order": 1,
-                "custom_address_email": email,
-                "creation": (">=", threshold),
-                "docstatus": 0,
-            },
-            fields=["name", "creation"],
-            order_by="creation desc",
+        existing_log = frappe.get_all(
+            "App Registration Log",
+            filters={"email": email, "status": "Completed"},
             limit_page_length=1
         )
-        if existing_so:
-            order_name = existing_so[0]["name"]
+        if existing_log:
+            frappe.log_error("Guest Order Creation", f"Guest order creation failed: Account already exists for email {email}")
+            frappe.throw(f"Guest order creation failed: Account already exists for email {email}")
 
-            # si log incomplet ou absent => on relance l’async (idempotent)
-            frappe.enqueue(
-                method=create_user_and_customer,
-                queue="default",
-                timeout=300,
-                guest_data=guest_info,
-                order_name=order_name,
-            )
-            return {"success": True, "order_name": order_name, "mode": "idempotent_return"}
+        cart = request_dict.get("cart")
+        customer_name = email or guest_info["custom_first_name"] + " " + guest_info["custom_last_name"]
 
-        # ✅ on ne bloque plus si Completed existe (redux peut être incohérent)
-        # on crée le SO guest puis le worker décidera s’il faut (re)créer/compléter.
+        if not cart or not customer_name:
+            frappe.log_error("Guest Order Creation", "Guest order creation failed: Cart data or customer name is missing")
+            frappe.throw("Guest order creation failed: Cart data or customer name is missing")
 
-        response = create_order(**data)
-        order_name = response.get("name") if isinstance(response, dict) else getattr(response, "name", None)
+        #order_data = {"cart": cart, "customer_name": customer_name}
+        #order_data.update(guest_info)
+
+        #from path.to.create_order import create_order  # adapter à ton chemin réel
+        response = create_order(**request_dict)
+        order_name = response.get("name") 
+
         if not order_name:
-            frappe.throw("Order creation failed (no order name).")
+            frappe.log_error("Guest Order Creation", "Guest order creation failed: Order creation did not return an order name")
+            frappe.throw("Order creation failed.")
 
-        # Injection des champs guest
+        # Injection dans le Sales Order
         for fieldname, value in guest_info.items():
-            if value is not None and value != "":
+            if value:
                 frappe.db.set_value("Sales Order", order_name, fieldname, value)
 
-        frappe.log_error("Guest Order Creation", f"Enqueuing account creation for order {order_name} / email {email}")
+        #enqueue(
+        #    create_user_and_customer,
+        #    queue="default",
+        #    timeout=300,
+        #    is_async=True,
+        #    guest_data=guest_info,
+        #    order_name=order_name
+        #)
+        frappe.log_error("Guest Order Creation", f"Guest Order Creation: Enqueuing account creation for order {order_name} with guest info {guest_info}")
         frappe.enqueue(
             method=create_user_and_customer,
             queue="default",
             timeout=300,
             guest_data=guest_info,
             order_name=order_name,
+            #publish_progress=True,
         )
 
-        return {"success": True, "order_name": order_name, "mode": "created"}
+        frappe.msgprint(
+            _("Account creation is queued. It may take a few minutes"),
+            alert=True,
+            indicator="blue",
+        )
+
+
+        return {
+            "success": True,
+            "order_name": order_name
+        }
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Guest Order Creation Failed")
         return {"error": "Order creation failed", "details": str(e)}
-
 
 
 @frappe.whitelist(allow_guest=True)
@@ -2673,25 +2677,24 @@ def create_user_and_customer(guest_data=None, order_name=None):
 
     if not guest_data:
         request_data = frappe.request.data
-        request_dict = frappe.parse_json(request_data.decode('utf-8')) or {}
-        guest_data = request_dict.get("data", {}) if isinstance(request_dict.get("data"), dict) else request_dict
+        request_dict = frappe.parse_json(request_data.decode('utf-8'))
+        guest_data = request_dict.get("data", {})
 
     try:
+        email = "" 
+        first_name = "" 
+        last_name = ""
         password = frappe.generate_hash(length=12)
+        mobile_no = ""
+        address_data = ""
 
-        # -------------------------
-        # 1) Normalisation inputs
-        # -------------------------
         if is_background:
-            email = (guest_data.get("custom_address_email") or "").strip().lower()
-            first_name = (guest_data.get("custom_first_name") or "").strip()
-            last_name = (guest_data.get("custom_last_name") or "").strip()
-            mobile_no = (guest_data.get("custom_address_phone") or "").strip()
-            longitude = guest_data.get("custom_longitude") or 0
-            latitude = guest_data.get("custom_latitude") or 0
-
+            email = guest_data.get("custom_address_email")
+            first_name = guest_data.get("custom_first_name")
+            last_name = guest_data.get("custom_last_name")
+            mobile_no = guest_data.get("custom_address_phone")
             address_data = {
-                "address_title": f"{first_name} {last_name}".strip() or email,
+                "address_title": f"{first_name} {last_name}".strip(),
                 "address_type": "Billing",
                 "address_line1": guest_data.get("custom_address_line_01"),
                 "address_line2": guest_data.get("custom_address_line_02"),
@@ -2702,82 +2705,30 @@ def create_user_and_customer(guest_data=None, order_name=None):
                 "country": guest_data.get("custom_address_country"),
                 "phone": mobile_no,
                 "email_id": email,
-                "custom_longitude": longitude,
-                "custom_latitude": latitude,
+                "custom_longitude": guest_data.get("custom_longitude"),
+                "custom_latitude": guest_data.get("custom_latitude"),
             }
         else:
-            email = (guest_data.get("email") or "").strip().lower()
-            first_name = (guest_data.get("first_name") or "").strip()
-            last_name = (guest_data.get("last_name") or "").strip()
-            mobile_no = (guest_data.get("mobile_no") or "").strip()
-            address_data = guest_data.get("address_data", {}) or {}
+            email = guest_data.get("email")
+            first_name = guest_data.get("first_name")
+            last_name = guest_data.get("last_name")
+            mobile_no = guest_data.get("mobile_no")
+            address_data = guest_data.get("address_data", {})
 
-        # -------------------------
-        # 2) Fallback si email vide (création via téléphone)
-        #    => user/prenom = phone (digits only)
-        # -------------------------
-        phone_digits = only_digits(mobile_no) if mobile_no else ""
-        if not email:
-            if not phone_digits:
-                return {"error": "Missing required fields (email or mobile)."}
-            email = f"{phone_digits}@mobile.com"
-            first_name = phone_digits
-            last_name = phone_digits
+        if not email or not first_name:
+            return {"error": "Missing required fields"}
 
-        if not first_name:
-            # si vide, fallback propre
-            first_name = (phone_digits or email)
-
-        # -------------------------
-        # 3) Récupérer le dernier log (si existe)
-        # -------------------------
-        last_log = get_latest_app_reg_log(email=email, mobile=mobile_no) if 'get_latest_app_reg_log' in globals() else None
-        # fallback si la helper n'existe pas / n'est pas fiable
-        if not last_log:
-            rows = frappe.get_all(
-                "App Registration Log",
-                filters={"email": email},
-                fields=["name", "status", "customer_code", "public_key", "private_key", "creation", "retry_count"],
-                order_by="creation desc",
-                limit_page_length=1
-            )
-            last_log = rows[0] if rows else None
-
-        def log_is_older_than_8h(log_row):
-            if not log_row or not log_row.get("creation"):
-                return True
-            return log_row["creation"] < add_to_date(now_datetime(), hours=-8)
-
-        # -------------------------
-        # 4) Si log incomplet et vieux => on "relance"
-        #    (nouveau log Pending, retry_count++)
-        # -------------------------
-        log_doc = None
         if is_background:
-            need_new_log = False
-            if not last_log:
-                need_new_log = True
-            elif last_log.get("status") != "Completed" and log_is_older_than_8h(last_log):
-                need_new_log = True
+            log = frappe.get_doc({
+                "doctype": "App Registration Log",
+                "email": email,
+                "mobile": mobile_no,
+                "order": order_name,
+                "status": "Pending",
+                "retry_count": 0
+            })
+            log.insert(ignore_permissions=True)
 
-            if need_new_log:
-                log_doc = frappe.get_doc({
-                    "doctype": "App Registration Log",
-                    "email": email,
-                    "mobile": mobile_no,
-                    "sales_order": order_name,
-                    "status": "Pending",
-                    "retry_count": (last_log.get("retry_count") or 0) + 1 if last_log else 0
-                })
-                log_doc.insert(ignore_permissions=True)
-            else:
-                # utiliser le dernier log si possible
-                if last_log and last_log.get("name"):
-                    log_doc = frappe.get_doc("App Registration Log", last_log["name"])
-
-        # -------------------------
-        # 5) Ensure User (idempotent)
-        # -------------------------
         if not frappe.db.exists("User", email):
             user_doc = frappe.get_doc({
                 "doctype": "User",
@@ -2794,24 +2745,23 @@ def create_user_and_customer(guest_data=None, order_name=None):
                 ]
             })
             user_doc.insert(ignore_permissions=True)
+            #frappe.db.commit()
             frappe.log_error("User Creation", f"User created successfully for email {email}")
+            u_doc = frappe.get_doc("User", email)
+            old_user = frappe.session.user
+            try:
+                frappe.set_user("Administrator")  # ou un user technique System Manager
+                keys = generate_keys(u_doc.name)
+            finally:
+                frappe.set_user(old_user)
+
+            private_key = keys["api_secret"]
+            public_key = frappe.db.get_value("User", u_doc.name, "api_key")
         else:
             user_doc = frappe.get_doc("User", email)
+            public_key = user_doc.api_key
+            private_key = None
 
-        # Keys: si on est en réparation / relance, on régénère le secret
-        old_user = frappe.session.user
-        try:
-            frappe.set_user("Administrator")
-            keys = generate_keys(user_doc.name)
-        finally:
-            frappe.set_user(old_user)
-
-        private_key = keys.get("api_secret")
-        public_key = frappe.db.get_value("User", user_doc.name, "api_key")
-
-        # -------------------------
-        # 6) Ensure Customer (idempotent)
-        # -------------------------
         existing_customer = frappe.db.exists("Customer", {"email_id": email})
         if not existing_customer:
             new_customer_code = generate_customer_code()
@@ -2819,53 +2769,53 @@ def create_user_and_customer(guest_data=None, order_name=None):
                 "doctype": "Customer",
                 "name": new_customer_code,
                 "custom_customer_code": new_customer_code,
-                "customer_name": f"{first_name} {last_name}".strip() or first_name,
+                "customer_name": f"{first_name} {last_name}",
                 "email_id": email,
-                "mobile_no": mobile_no if frappe.get_meta("Customer").has_field("mobile_no") else None,
                 "customer_group": "App Customer Group",
                 "territory": "All Territories",
                 "customer_type": "Individual"
             })
             customer_doc.insert(ignore_permissions=True)
             frappe.db.commit()
+            frappe.msgprint("Customer created successfully.")
+
+            if address_data:
+                create_address_2(address_data, customer_doc.name)
+
+            frappe.db.commit()
+
+            if order_name and frappe.db.exists("Sales Order", order_name):
+                frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
+                new_address = frappe.get_doc("Address", new_customer_code + "_01")
+                if new_address:
+                    frappe.db.set_value("Sales Order", order_name, "customer_address", new_address.name)
+                customer_name = f"{first_name} {last_name}"
+                frappe.db.set_value("Sales Order", order_name, "customer_name", customer_name)
+
+                # refresh display text
+                frappe.db.set_value(
+                    "Sales Order",
+                    order_name,
+                    "address_display",
+                    get_address_display(new_address.name),
+                )
+
         else:
             new_customer_code = frappe.get_value("Customer", {"email_id": email}, "name")
 
-        # -------------------------
-        # 7) Ensure Address (idempotent)
-        #    si latitude/longitude absents => 0
-        # -------------------------
-        if address_data:
-            address_data["custom_longitude"] = address_data.get("custom_longitude") or 0
-            address_data["custom_latitude"] = address_data.get("custom_latitude") or 0
+        if is_background:
+            user_doc = frappe.get_doc("User", email)
+            public_key = user_doc.api_key
+            
+            log.status = "Completed"
+            log.customer_code = new_customer_code
+            log.user_email = email
+            log.public_key = public_key
+            log.private_key = private_key
+            log.save(ignore_permissions=True)
 
-            addr_name_guess = f"{new_customer_code}_01"
-            if not frappe.db.exists("Address", addr_name_guess):
-                create_address_2(address_data, new_customer_code)
-
-        # -------------------------
-        # 8) Patch Sales Order (si fourni)
-        # -------------------------
-        if order_name and frappe.db.exists("Sales Order", order_name):
-            frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
-
-            addr_name = f"{new_customer_code}_01"
-            if frappe.db.exists("Address", addr_name):
-                frappe.db.set_value("Sales Order", order_name, "customer_address", addr_name)
-                frappe.db.set_value("Sales Order", order_name, "address_display", get_address_display(addr_name))
-
-            customer_name = f"{first_name} {last_name}".strip()
-            frappe.db.set_value("Sales Order", order_name, "customer_name", customer_name)
-
-        # -------------------------
-        # 9) Finaliser log
-        # -------------------------
-        if is_background and log_doc:
-            log_doc.status = "Completed"
-            log_doc.customer_code = new_customer_code
-            log_doc.public_key = public_key
-            log_doc.private_key = private_key
-            log_doc.save(ignore_permissions=True)
+        
+        
 
         return {
             "user_email": email,
@@ -2876,20 +2826,16 @@ def create_user_and_customer(guest_data=None, order_name=None):
 
     except Exception as e:
         frappe.db.rollback()
-        try:
-            if is_background:
-                # essayer de marquer Failed le dernier log du run
-                if 'log_doc' in locals() and log_doc:
-                    log_doc.status = "Failed"
-                    log_doc.error_log = str(e)
-                    log_doc.retry_count = (log_doc.retry_count or 0) + 1
-                    log_doc.save(ignore_permissions=True)
-        except Exception:
-            pass
-
+        if is_background:
+            try:
+                log.status = "Failed"
+                log.error_log = str(e)
+                log.retry_count += 1
+                log.save(ignore_permissions=True)
+            except:
+                pass
         frappe.log_error(frappe.get_traceback(), "create_user_and_customer error")
         return {"error": str(e)}
-
 
 
 def generate_customer_code():
@@ -2945,8 +2891,8 @@ def zzz_check_user_registration_status(email=None):
 
 @frappe.whitelist(allow_guest=True)
 def check_user_registration_status(email=None, mobile=None):
-    email = (email or frappe.form_dict.get("email") or "").strip().lower()
-    mobile = (mobile or frappe.form_dict.get("mobile") or "").strip()
+    email = email or frappe.form_dict.get("email")
+    mobile = mobile or frappe.form_dict.get("mobile")
 
     if not email and not mobile:
         return {"error": "You must provide at least email or mobile number."}
@@ -2958,34 +2904,38 @@ def check_user_registration_status(email=None, mobile=None):
         filters["mobile"] = mobile
 
     try:
+        # Cherche le log correspondant à l'email ou au numéro
         log = frappe.get_all(
             "App Registration Log",
             filters=filters,
-            fields=["status", "customer_code", "email", "public_key", "private_key", "sales_order", "creation"],
+            fields=[
+                "status", "customer_code", "email",
+                "public_key", "private_key", "sales_order", "creation"
+            ],
             order_by="creation desc",
             limit_page_length=1
         )
 
         if not log:
-            return {"status": "Not Found", "registered": False, "can_guest": True}
+            return {
+                "status": "Not Found",
+                "registered": False
+            }
 
         entry = log[0]
-        status = entry["status"] or "Unknown"
         return {
-            "status": status,
-            "registered": status == "Completed",
-            "can_guest": status != "Completed",  # ✅ si incomplet => guest mode
-            "customer_code": entry["customer_code"] if status == "Completed" else None,
-            "public_key": entry.get("public_key"),
-            "private_key": entry.get("private_key"),
-            "user_email": entry.get("email"),
-            "order": entry.get("sales_order"),
+            "status": entry["status"],
+            "registered": entry["status"] == "Completed",
+            "customer_code": entry["customer_code"] if entry["status"] == "Completed" else None,
+            "public_key": entry["public_key"],
+            "private_key": entry["private_key"],
+            "user_email": entry["email"],
+            "order": entry["sales_order"]
         }
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "check_user_registration_status error")
         return {"error": str(e)}
-
 
 
 
@@ -3101,61 +3051,5 @@ def test_order(args):
         
     return sale
 
-
-
-def normalize_ksa_coordinates(latitude, longitude, *, do_swap=True):
-    """
-    Normalise des coordonnées (lat, lon) pour l'Arabie Saoudite.
-    - Convertit en float
-    - Détecte inversion probable selon bornes KSA (plus robuste)
-    - Swape si nécessaire (si do_swap=True)
-    - Valide les bornes globales (lat<=90, lon<=180)
-
-    Returns:
-        (lat, lon, swapped, reason)
-    """
-    lat = flt(latitude)
-    lon = flt(longitude)
-
-    # Validation globale Terre
-    if abs(lat) > 90 or abs(lon) > 180:
-        # Tentative de correction si inversion "mathématiquement impossible" côté lat
-        if do_swap and abs(lat) > 90 and abs(lon) <= 90:
-            lat, lon = lon, lat
-            swapped = True
-            reason = "swap_abs_lat_gt_90"
-        else:
-            raise ValueError(f"Invalid coordinates: lat={lat}, lon={lon}")
-    else:
-        swapped = False
-        reason = "ok"
-
-    # Bornes approximatives Arabie Saoudite (à ajuster si tu veux être plus strict)
-    KSA_LAT_MIN = 15
-    KSA_LAT_MAX = 35
-    KSA_LON_MIN = 30
-    KSA_LON_MAX = 60
-
-    lat_in_ksa = (KSA_LAT_MIN <= lat <= KSA_LAT_MAX)
-    lon_in_ksa = (KSA_LON_MIN <= lon <= KSA_LON_MAX)
-
-    # Détection inversion plausible pour KSA:
-    # - la "latitude" sort des bornes KSA
-    # - la "longitude" ressemble à une latitude KSA
-    # - et l'autre (vraie longitude) ressemble à une longitude KSA
-    if do_swap and (not lat_in_ksa):
-        lon_looks_like_ksa_lat = (KSA_LAT_MIN <= lon <= KSA_LAT_MAX)
-        lat_looks_like_ksa_lon = (KSA_LON_MIN <= lat <= KSA_LON_MAX)
-
-        if lon_looks_like_ksa_lat and lat_looks_like_ksa_lon:
-            lat, lon = lon, lat
-            swapped = True
-            reason = "swap_ksa_range_detection"
-
-    # Re-validation globale après swap
-    if abs(lat) > 90 or abs(lon) > 180:
-        raise ValueError(f"Invalid coordinates after normalization: lat={lat}, lon={lon}")
-
-    return lat, lon, swapped, reason
 
 

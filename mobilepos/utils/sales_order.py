@@ -1,5 +1,5 @@
 import frappe
-from mobilepos.mobile_pos import get_branch_name_by_location
+from mobilepos.mobile_pos import get_branch_name_by_location, normalize_ksa_coordinates
 #from shapely.geometry import Point
 
 
@@ -7,7 +7,12 @@ def create_order(doc, method):
     if doc.customer.startswith("AC"):
         add_doc = frappe.get_doc("Address",doc.customer_address)
         #location = Point(add_doc.custom_longitude or doc.custom_longitude, add_doc.custom_latitude or doc.custom_latitude)
-        branch = get_branch_name_by_location(add_doc.custom_latitude or doc.custom_latitude, add_doc.custom_longitude or doc.custom_longitude)
+        lat, lon, swapped, reason = normalize_ksa_coordinates(add_doc.custom_latitude or doc.custom_latitude, add_doc.custom_longitude or doc.custom_longitude)
+
+        if swapped:
+            frappe.logger().info(f"Coordinates swapped ({reason}): lat={lat}, lon={lon}")
+
+        branch = get_branch_name_by_location(lat, lon)
         if branch:
             doc.branch = branch
             doc.territory = branch
