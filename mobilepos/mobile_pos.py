@@ -1903,8 +1903,8 @@ def get_app_defaut_price_list():
 def get_price_list(area="UNKWON_AREA", latitude=0, longitude=0):
     lat, lon, swapped = normalize_ksa_coordinates(latitude, longitude, strict=False)
 
-    if swapped:
-        frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization")
+    #if swapped:
+    #    frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization")
 
     item_prices = (
         get_branch_name_from_geofence(lat, lon)
@@ -2616,11 +2616,8 @@ def create_guest_order():
         guest_info["custom_latitude"] = lat
         guest_info["custom_longitude"] = lon
 
-        if swapped:
-            frappe.log_error(
-                message=f"GEO_DEBUG | lat={lat} lon={lon} swapped={swapped} payload_lat={data.get('coustome_latitude')} payload_lon={data.get('coustome_longitude')}",
-                title="Coordinate Normalization for Guest Order"
-            )
+        #if swapped:
+        #    frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization for Guest Order")
 
         email = (guest_info.get("custom_address_email") or "").strip()
         if not email:
