@@ -15,14 +15,8 @@ def get_latest_app_reg_log(email: str):
     # Adjust doctype + fieldnames
     return frappe.get_all(
         "App Registration Log",
-        filters={"user_email": email},
-        fields=["name", "user_email", "customer_code", "status", "creation",
-                # optional payload-like fields you may have:
-                "first_name", "last_name",
-                "address_title", "address_line1", "address_line2",
-                "city", "state", "country", "pincode",
-                "latitude", "longitude",
-                "phone"],
+        filters={"email": email},
+        fields=["*"],
         order_by="creation desc",
         limit=1
     )
