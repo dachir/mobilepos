@@ -11,8 +11,8 @@ def create_order(doc, method):
 
         lat, lon, swapped = normalize_ksa_coordinates(add_doc.custom_latitude or doc.custom_latitude, add_doc.custom_longitude or doc.custom_longitude, strict=False)
 
-        #if swapped:
-        #    frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization")
+        if swapped:
+            frappe.log_error(f"GEO_DEBUG lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization")
 
         branch = get_branch_name_by_location(lat, lon)
         if branch:
