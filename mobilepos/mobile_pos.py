@@ -2868,9 +2868,17 @@ def create_user_and_customer(guest_data=None, order_name=None):
             frappe.db.set_value("Sales Order", order_name, "customer", new_customer_code)
 
             addr_name = f"{new_customer_code}_01"
+            old_user = frappe.session.user
+            try:
+                frappe.set_user("Administrator")
+                display = get_address_display(addr_name)
+            finally:
+                frappe.set_user(old_user)
+
+            
             if frappe.db.exists("Address", addr_name):
                 frappe.db.set_value("Sales Order", order_name, "customer_address", addr_name)
-                frappe.db.set_value("Sales Order", order_name, "address_display", get_address_display(addr_name))
+                frappe.db.set_value("Sales Order", order_name, "address_display", display)
 
             customer_name = f"{first_name} {last_name}".strip()
             frappe.db.set_value("Sales Order", order_name, "customer_name", customer_name)
