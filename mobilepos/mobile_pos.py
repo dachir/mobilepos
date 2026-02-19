@@ -1760,6 +1760,8 @@ def update_item():
 @frappe.whitelist()
 def get_branch_name_from_geofence(latitude, longitude):
     geofence_price_list = frappe.db.get_single_value("Shop Settings", "geofence_price_list")
+
+    frappe.log_error(f"latitude={latitude} longitude={longitude}", "Geofence Debug in  get_branch_name_from_geofence")
     if bool(geofence_price_list):
         if not latitude or not longitude:
             frappe.throw("Latitude and longitude are required.")
