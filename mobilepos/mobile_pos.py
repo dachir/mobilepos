@@ -2617,7 +2617,10 @@ def create_guest_order():
         guest_info["custom_longitude"] = lon
 
         if swapped:
-            frappe.log_error("GEO_DEBUG", f"lat={lat} lon={lon} swapped={swapped}", "Coordinate Normalization for Guest Order")
+            frappe.log_error(
+                message=f"GEO_DEBUG | lat={lat} lon={lon} swapped={swapped} payload_lat={data.get('coustome_latitude')} payload_lon={data.get('coustome_longitude')}",
+                title="Coordinate Normalization for Guest Order"
+            )
 
         email = (guest_info.get("custom_address_email") or "").strip()
         if not email:
