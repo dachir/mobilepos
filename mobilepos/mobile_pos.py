@@ -2737,7 +2737,7 @@ def create_user_and_customer(guest_data=None, order_name=None):
         # -------------------------
         # 3) Récupérer le dernier log (si existe)
         # -------------------------
-        last_log = get_latest_app_reg_log(email=email) if 'get_latest_app_reg_log' in globals() else None
+        last_log = get_latest_app_reg_log(email=email)
         # fallback si la helper n'existe pas / n'est pas fiable
         if not last_log:
             rows = frappe.get_all(
