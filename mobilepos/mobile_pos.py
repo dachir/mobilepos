@@ -3167,6 +3167,7 @@ def normalize_ksa_coordinates(lat, lon, strict=False):
         return lat_f, lon_f, False
 
     if in_ksa(lon_f, lat_f):
+        frappe.log_error(f"Coordinates swapped based on KSA bounding box: lat={lat_f}, lon={lon_f}", "Coordinate Normalization Info")
         return lon_f, lat_f, True
 
     if strict:
