@@ -1761,7 +1761,7 @@ def update_item():
 def get_branch_name_from_geofence(latitude, longitude):
     geofence_price_list = frappe.db.get_single_value("Shop Settings", "geofence_price_list")
 
-    frappe.log_error(f"latitude={latitude} longitude={longitude}", "Geofence Debug in  get_branch_name_from_geofence")
+    #frappe.log_error(f"latitude={latitude} longitude={longitude}", "Geofence Debug in  get_branch_name_from_geofence")
     if bool(geofence_price_list):
         if not latitude or not longitude:
             frappe.throw("Latitude and longitude are required.")
@@ -2618,8 +2618,8 @@ def create_guest_order():
         guest_info["custom_latitude"] = lat
         guest_info["custom_longitude"] = lon
 
-        if swapped:
-            frappe.log_error(f"GEO_DEBUG | lat={lat} lon={lon} swapped={swapped} payload_lat={data.get('coustome_latitude')} payload_lon={data.get('coustome_longitude')}", "Coordinate Normalization for Guest Order")
+        #if swapped:
+        #    frappe.log_error(f"GEO_DEBUG | lat={lat} lon={lon} swapped={swapped} payload_lat={data.get('coustome_latitude')} payload_lon={data.get('coustome_longitude')}", "Coordinate Normalization for Guest Order")
 
         email = (guest_info.get("custom_address_email") or "").strip()
         if not email:
@@ -3177,7 +3177,7 @@ def normalize_ksa_coordinates(lat, lon, strict=False):
         return lat_f, lon_f, False
 
     if in_ksa(lon_f, lat_f):
-        frappe.log_error(f"Coordinates swapped based on KSA bounding box: lat={lat_f}, lon={lon_f}", "Coordinate Normalization Info")
+        #frappe.log_error(f"Coordinates swapped based on KSA bounding box: lat={lat_f}, lon={lon_f}", "Coordinate Normalization Info")
         return lon_f, lat_f, True
 
     if strict:
