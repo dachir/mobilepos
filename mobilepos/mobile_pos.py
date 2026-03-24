@@ -2489,7 +2489,7 @@ def create_invoice():
             "customer": parsed["customer"],
             "company": parsed["company"],
             "branch": parsed["branch"],
-            "set_warehouse": parsed["warehouse"],
+            "set_warehouse": shop_doc.warehouse or parsed["warehouse"],
             "update_stock": 1,
             "sales_reconciliation": parsed["sales_person"],
             "selling_price_list": selling_price_list ,
